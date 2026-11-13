@@ -18,6 +18,17 @@ from datetime import datetime
 import numpy as np
 
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv is optional; we can still read a pre-set env var.
+    load_dotenv = None
+
+# Read the key from the environment at runtime (never commit real keys).
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+
+
 # TODO: Define prompt configurations for different cost-effectiveness strategies
 # Create a dictionary with three configurations:
 # 1. "minimal" - lowest cost but potentially less effective
@@ -25,30 +36,36 @@ import numpy as np
 # 3. "premium" - highest quality but most expensive
 PROMPT_CONFIGS = {
     "minimal": {
-        # TODO: Choose most cost-effective model (hint: gpt-4o-mini is cheapest)
-        "model": "gpt-4o-mini",
-        # TODO: Set temperature for balanced results
-        "temperature": 0.7,
-        # TODO: Set low max_tokens to control costs
-        "max_tokens": 200,
+        "parameters": {
+            # TODO: Choose most cost-effective model (hint: gpt-4o-mini is cheapest)
+            "model": "gpt-4o-mini",
+            # TODO: Set temperature for balanced results
+            "temperature": 0.7,
+            # TODO: Set low max_completion_tokens to control costs
+            "max_completion_tokens": 200
+        },
         "description": "Minimal prompts with cost-effective model for budget optimization"
     },
     "standard": {
-        # TODO: Choose balanced model (hint: gpt-4o offers good performance)
-        "model": "gpt-4o",
-        # TODO: Set temperature for consistent results
-        "temperature": 0.6,
-        # TODO: Set moderate max_tokens
-        "max_tokens": 400,
+        "parameters": {
+            # TODO: Choose balanced model (hint: gpt-4o offers good performance)
+            "model": "gpt-4o",
+            # TODO: Set temperature for consistent results
+            "temperature": 0.6,
+            # TODO: Set moderate max_completion_tokens
+            "max_completion_tokens": 400
+        },
         "description": "Standard prompts with balanced cost-performance ratio"
     },
     "premium": {
-        # TODO: Choose high-performance model
-        "model": "gpt-4-turbo",
-        # TODO: Set temperature for consistency (hint: lower for more consistent)
-        "temperature": 0.5,
-        # TODO: Set higher max_tokens for detailed responses
-        "max_tokens": 800,
+        "parameters": {
+            # TODO: Choose high-performance model
+            "model": "gpt-4-turbo",
+            # TODO: Set temperature for consistency (hint: lower for more consistent)
+            "temperature": 0.5,
+            # TODO: Set higher max_completion_tokens for detailed responses
+            "max_completion_tokens": 800
+        },
         "description": "Detailed prompts with premium model for maximum effectiveness"
     }
 }
@@ -167,15 +184,19 @@ def call_openai_api(prompt: str, config: Dict) -> Dict:
     Returns:
         Dict: Response data including content, performance metrics, cost analysis, and error handling
     """
-    print(f"  🔄 Calling {config['model']} (temp: {config['temperature']}, max_tokens: {config['max_tokens']})...")
+    parameters = config['parameters']
+    print(f"  🔄 Calling {parameters['model']} (temperature: {parameters['temperature']}, max_completion_tokens: {parameters['max_completion_tokens']})...")
     
     # TODO: Record start time for latency measurement
-    start_time = 0
+    start_time = time.time()
     
     try:
         # TODO: Initialize OpenAI client with your API key
         # SECURITY NOTE: Use environment variables for API keys in production
-        client = OpenAI(api_key="YOUR_API_KEY_HERE")
+        client = OpenAI(
+            api_key=OPENAI_API_KEY,
+            base_url="https://openai.vocareum.com/v1" if OPENAI_API_KEY.startswith("voc") else None
+        )
         
         # TODO: Make the API call
         # Hint: Use client.chat.completions.create() with:
@@ -183,31 +204,35 @@ def call_openai_api(prompt: str, config: Dict) -> Dict:
         # - messages with user role and prompt content
         # - temperature from config
         # - max_completion_tokens from config
-        response = None
+
+        response = client.chat.completions.create(
+            messages = [{"role": "user", "content": prompt}],
+            **parameters
+        )
         
         # TODO: Calculate latency in milliseconds
-        end_time = 0
-        latency = 0
+        end_time = time.time()
+        latency = (end_time - start_time) * 1000
         
         # TODO: Calculate cost based on token usage and model pricing
         # Hint: cost = (tokens / 1000) * price_per_1k_tokens
-        model_name = config["model"]
-        input_cost = 0
-        output_cost = 0
-        total_cost = 0
+        model_name = parameters["model"]
+        input_cost = response.usage.prompt_tokens * MODEL_PRICING[model_name]["input"]
+        output_cost = response.usage.completion_tokens * MODEL_PRICING[model_name]["output"]
+        total_cost = input_cost + output_cost
         
         # TODO: Structure the successful response
         # Include: response content, latency, token usage, cost analysis, success status
         result = {
-            "response": "",
-            "latency_ms": 0,
-            "tokens_used": 0,
-            "prompt_tokens": 0,
-            "completion_tokens": 0,
-            "input_cost": 0,
-            "output_cost": 0,
-            "total_cost": 0,
-            "cost_per_token": 0,
+            "response": response.choices[0].message.content or "",
+            "latency_ms": latency,
+            "tokens_used": response.usage.total_tokens,
+            "prompt_tokens": response.usage.prompt_tokens,
+            "completion_tokens": response.usage.completion_tokens,
+            "input_cost": input_cost,
+            "output_cost": output_cost,
+            "total_cost": total_cost,
+            "cost_per_token": total_cost / response.usage.total_tokens,
             "success": True,
             "error": None
         }
@@ -323,10 +348,10 @@ def test_prompt_strategy(category: str, strategy_type: str):
     # TODO: Get prompt info and config
     prompt_info = None
     config = None
-    
+    parameters = config['parameters']
     print(f"\n🧪 TESTING PROMPT STRATEGY: {category.upper()} - {strategy_type.upper()}")
     print(f"Description: {prompt_info['description']}")
-    print(f"Model: {config['model']} | Temp: {config['temperature']} | Max Tokens: {config['max_tokens']}")
+    print(f"Model: {parameters['model']} | Temp: {parameters['temperature']} | Max Completion Tokens: {parameters['max_completion_tokens']}")
     print("=" * 80)
     
     # TODO: Prepare the prompt (replace placeholder if needed)
@@ -372,7 +397,7 @@ def test_prompt_strategy(category: str, strategy_type: str):
             'completion_tokens': result['completion_tokens'],
             'total_cost': result['total_cost'],
             'cost_effectiveness': cost_effectiveness,
-            'model': config['model']
+            'model': parameters['model']
         }
     else:
         print(f"❌ Failed: {result['error']}")
@@ -426,19 +451,29 @@ def compare_prompt_strategies(category: str):
         print("❌ Insufficient results for comparison")
         return results
 
-# TODO: Example usage - uncomment and test when ready
-# Test a single strategy
-# minimal_summary = test_prompt_strategy("task_completion", "minimal")
+def main():
+    if not OPENAI_API_KEY:
+        print("❌ OPENAI_API_KEY is not set. Add it to your .env file or environment and try again.")
+        return
+    
+    # TODO: Example usage - uncomment and test when ready
+    # Test a single strategy
+    # minimal_summary = test_prompt_strategy("task_completion", "minimal")
 
-# TODO: Additional test examples you can run:
-# Compare all strategies for a category
-# task_completion_results = compare_prompt_strategies("task_completion")
-# creative_writing_results = compare_prompt_strategies("creative_writing")
-# problem_solving_results = compare_prompt_strategies("problem_solving")
+    # TODO: Additional test examples you can run:
+    # Compare all strategies for a category
+    # task_completion_results = compare_prompt_strategies("task_completion")
+    # creative_writing_results = compare_prompt_strategies("creative_writing")
+    # problem_solving_results = compare_prompt_strategies("problem_solving")
 
-# Single strategy tests:
-# standard_story = test_prompt_strategy("creative_writing", "standard")
-# premium_business = test_prompt_strategy("problem_solving", "premium")
+    # Single strategy tests:
+    # standard_story = test_prompt_strategy("creative_writing", "standard")
+    # premium_business = test_prompt_strategy("problem_solving", "premium")
+
+
+if __name__ == "__main__":
+    main()
+
 
 """
 EXERCISE COMPLETION CHECKLIST:
@@ -447,7 +482,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Fill in MODEL_PRICING with current OpenAI pricing
 ✅ Create comprehensive PROMPT_STRATEGIES for all categories and types
 ✅ Write substantial SAMPLE_TEXT for summarization testing
-□ Implement call_openai_api() function with cost calculation
+✅ Implement call_openai_api() function with cost calculation
 □ Complete score_response_quality() with category-specific logic
 □ Implement calculate_cost_effectiveness() function
 □ Complete test_prompt_strategy() function
