@@ -26,29 +26,29 @@ import numpy as np
 PROMPT_CONFIGS = {
     "minimal": {
         # TODO: Choose most cost-effective model (hint: gpt-4o-mini is cheapest)
-        "model": "",
+        "model": "gpt-4o-mini",
         # TODO: Set temperature for balanced results
-        "temperature": 0,
+        "temperature": 0.7,
         # TODO: Set low max_tokens to control costs
-        "max_tokens": 0,
+        "max_tokens": 200,
         "description": "Minimal prompts with cost-effective model for budget optimization"
     },
     "standard": {
         # TODO: Choose balanced model (hint: gpt-4o offers good performance)
-        "model": "",
+        "model": "gpt-4o",
         # TODO: Set temperature for consistent results
-        "temperature": 0,
+        "temperature": 0.6,
         # TODO: Set moderate max_tokens
-        "max_tokens": 0,
+        "max_tokens": 400,
         "description": "Standard prompts with balanced cost-performance ratio"
     },
     "premium": {
         # TODO: Choose high-performance model
-        "model": "",
+        "model": "gpt-4-turbo",
         # TODO: Set temperature for consistency (hint: lower for more consistent)
-        "temperature": 0,
+        "temperature": 0.5,
         # TODO: Set higher max_tokens for detailed responses
-        "max_tokens": 0,
+        "max_tokens": 800,
         "description": "Detailed prompts with premium model for maximum effectiveness"
     }
 }
@@ -437,7 +437,7 @@ def compare_prompt_strategies(category: str):
 """
 EXERCISE COMPLETION CHECKLIST:
 ✅ Import all necessary libraries
-□ Complete PROMPT_CONFIGS with appropriate models and parameters
+✅ Complete PROMPT_CONFIGS with appropriate models and parameters
 □ Fill in MODEL_PRICING with current OpenAI pricing
 □ Create comprehensive PROMPT_STRATEGIES for all categories and types
 □ Write substantial SAMPLE_TEXT for summarization testing
