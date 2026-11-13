@@ -6,7 +6,6 @@
 import openai
 from openai import OpenAI
 # TODO: Add remaining imports here
-from dotenv import load_dotenv
 import os
 import time
 import pandas as pd
@@ -17,7 +16,6 @@ import seaborn as sns
 from datetime import datetime
 import numpy as np
 
-
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -27,6 +25,21 @@ except ImportError:
 
 # Read the key from the environment at runtime (never commit real keys).
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+
+_client: Optional[OpenAI] = None
+
+def get_client() -> OpenAI:
+    """Create the OpenAI client once and reuse it for every call."""
+    global _client
+    if _client is None:
+        api_key = OPENAI_API_KEY
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY is not set")
+        _client = OpenAI(
+            api_key=api_key,
+            base_url="https://openai.vocareum.com/v1" if api_key.startswith("voc") else None
+        )
+    return _client
 
 
 # TODO: Define prompt configurations for different cost-effectiveness strategies
@@ -193,10 +206,7 @@ def call_openai_api(prompt: str, config: Dict) -> Dict:
     try:
         # TODO: Initialize OpenAI client with your API key
         # SECURITY NOTE: Use environment variables for API keys in production
-        client = OpenAI(
-            api_key=OPENAI_API_KEY,
-            base_url="https://openai.vocareum.com/v1" if OPENAI_API_KEY.startswith("voc") else None
-        )
+        client = get_client()
         
         # TODO: Make the API call
         # Hint: Use client.chat.completions.create() with:
@@ -452,10 +462,7 @@ def compare_prompt_strategies(category: str):
         return results
 
 def main():
-    if not OPENAI_API_KEY:
-        print("❌ OPENAI_API_KEY is not set. Add it to your .env file or environment and try again.")
-        return
-    
+    pass
     # TODO: Example usage - uncomment and test when ready
     # Test a single strategy
     # minimal_summary = test_prompt_strategy("task_completion", "minimal")
