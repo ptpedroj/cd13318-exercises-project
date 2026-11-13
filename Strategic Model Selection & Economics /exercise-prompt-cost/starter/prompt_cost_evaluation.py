@@ -138,9 +138,15 @@ PROMPT_STRATEGIES = [
 # TODO: Create sample text for testing summarization prompts
 # Write a substantial paragraph (200-300 words) about a relevant topic
 SAMPLE_TEXT = """
-TODO: Add a comprehensive text sample here that can be used for summarization testing.
-This should be 200-300 words about a relevant topic like AI, technology, business, etc.
-Make sure it has multiple key points that can be summarized effectively.
+Most people think they're good at prompting. They're not — they're good at chatting with AI, and that skill is rapidly becoming table stakes. Same model, same Tuesday, and the difference between the person who spends forty minutes cleaning up 70%-right output and the person who comes back to finished deliverables isn't talent. It's that she's practicing a discipline most people don't know exists yet. Three model releases in February alone shipped autonomous-agent capabilities that make chat-based prompting feel like bringing a phone book to a search-engine fight. The models stopped being conversation partners and started being workers — workers that run for days without checking in. And directing a worker you can't supervise in real time is a fundamentally different skill than having a productive conversation.
+
+So I'm naming four disciplines hiding inside the word "prompting." Prompt Craft — the original, synchronous skill — is now just the ability to type, no longer differentiating. Context Engineering is where the action is: your prompt might be 200 tokens, but the context window it lands in might be a million. The other 99.98% is context engineering. Anthropic's data is brutal — on a needle-in-a-million-tokens test, Sonnet 4.5 scored 18.5%. The window is a filing cabinet with no index.
+
+Intent Engineering tells agents what to want. Klarna learned this the hard way: excellent context, missing intent, and $40 million in projected savings cratered into a customer-satisfaction crisis. Specification Engineering — the newest discipline — is writing documents autonomous agents can execute over days: complete, structured, with acceptance criteria and constraints baked in.
+
+The 2025 mental model — "write good instructions" — only works if you're always in the room. Agents running at 2 AM aren't. So the quality you used to supply in real time has to be embedded before the run starts.
+
+Here's the part nobody puts in "how to prompt" courses: this discipline transfers. Tobi Lütke found that stating problems with complete context made him a better CEO, not just a better AI user. Clear requests, stated acceptance criteria, articulated constraints, decomposed projects — those are the four disciplines of AI input, and they're also just the disciplines of effective leadership. The specification is the prompt now. And the specification, done right, is just what clear thinking always looked like — finally made explicit, because the machines won't let us be lazy anymore.
 """
 
 def call_openai_api(prompt: str, config: Dict) -> Dict:
@@ -440,7 +446,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Complete PROMPT_CONFIGS with appropriate models and parameters
 ✅ Fill in MODEL_PRICING with current OpenAI pricing
 ✅ Create comprehensive PROMPT_STRATEGIES for all categories and types
-□ Write substantial SAMPLE_TEXT for summarization testing
+✅ Write substantial SAMPLE_TEXT for summarization testing
 □ Implement call_openai_api() function with cost calculation
 □ Complete score_response_quality() with category-specific logic
 □ Implement calculate_cost_effectiveness() function
