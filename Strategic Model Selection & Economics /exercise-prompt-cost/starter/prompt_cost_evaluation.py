@@ -28,11 +28,10 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 _client: Optional[OpenAI] = None
 
-def get_client() -> OpenAI:
+def get_client(api_key=OPENAI_API_KEY) -> OpenAI:
     """Create the OpenAI client once and reuse it for every call."""
     global _client
     if _client is None:
-        api_key = OPENAI_API_KEY
         if not api_key:
             raise ValueError("OPENAI_API_KEY is not set")
         _client = OpenAI(
