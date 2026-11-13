@@ -58,21 +58,21 @@ PROMPT_CONFIGS = {
 MODEL_PRICING = {
     "gpt-4o-mini": {
         # TODO: Add input token price (hint: check OpenAI pricing page)
-        "input": 0,
+        "input": 0.15 / 1_000_000,
         # TODO: Add output token price
-        "output": 0
+        "output": 0.6 / 1_000_000
     },
     "gpt-4o": {
         # TODO: Add input token price
-        "input": 0,
+        "input": 2.5 / 1_000_000,
         # TODO: Add output token price
-        "output": 0
+        "output": 10. / 1_000_000
     },
     "gpt-4-turbo": {
         # TODO: Add input token price
-        "input": 0,
+        "input": 10. / 1_000_000,
         # TODO: Add output token price
-        "output": 0
+        "output": 30. / 1_000_000
     }
 }
 
@@ -438,7 +438,7 @@ def compare_prompt_strategies(category: str):
 EXERCISE COMPLETION CHECKLIST:
 ✅ Import all necessary libraries
 ✅ Complete PROMPT_CONFIGS with appropriate models and parameters
-□ Fill in MODEL_PRICING with current OpenAI pricing
+✅ Fill in MODEL_PRICING with current OpenAI pricing
 □ Create comprehensive PROMPT_STRATEGIES for all categories and types
 □ Write substantial SAMPLE_TEXT for summarization testing
 □ Implement call_openai_api() function with cost calculation
