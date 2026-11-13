@@ -58,13 +58,17 @@ def cosine(a, b) -> float:
     return float(np.dot(a, b) / denominator) if denominator else 0.
 
 
+CONFIG_MINIMAL = "minimal"
+CONFIG_STANDARD = "standard"
+CONFIG_PREMIUM = "premium"
+
 # TODO: Define prompt configurations for different cost-effectiveness strategies
 # Create a dictionary with three configurations:
 # 1. "minimal" - lowest cost but potentially less effective
 # 2. "standard" - balanced cost-performance ratio
 # 3. "premium" - highest quality but most expensive
 PROMPT_CONFIGS = {
-    "minimal": {
+    CONFIG_MINIMAL: {
         "parameters": {
             # TODO: Choose most cost-effective model (hint: gpt-4o-mini is cheapest)
             "model": "gpt-4o-mini",
@@ -75,7 +79,7 @@ PROMPT_CONFIGS = {
         },
         "description": "Minimal prompts with cost-effective model for budget optimization"
     },
-    "standard": {
+    CONFIG_STANDARD: {
         "parameters": {
             # TODO: Choose balanced model (hint: gpt-4o offers good performance)
             "model": "gpt-4o",
@@ -86,7 +90,7 @@ PROMPT_CONFIGS = {
         },
         "description": "Standard prompts with balanced cost-performance ratio"
     },
-    "premium": {
+    CONFIG_PREMIUM: {
         "parameters": {
             # TODO: Choose high-performance model
             "model": "gpt-4-turbo",
@@ -128,65 +132,62 @@ CATEGORY_TASK_COMPLETION = "task_completion"
 CATEGORY_CREATIVE_WRITING = "creative_writing"
 CATEGORY_PROBLEM_SOLVING = "problem_solving"
 
-
+TEXT_PLACEHOLDER = "[TEXT_PLACEHOLDER]"
 # TODO: Define prompt strategies for different task categories
 # Create test cases that demonstrate how prompt complexity affects quality and cost
-PROMPT_STRATEGIES = [
-    {
-        "category": CATEGORY_TASK_COMPLETION,
-        "minimal": {
+PROMPT_STRATEGIES = {
+    CATEGORY_TASK_COMPLETION: {
+        CONFIG_MINIMAL: {
             # TODO: Create a basic summarization prompt
-            "prompt": "Summarize this text: [TEXT_PLACEHOLDER]",
+            "prompt": f"Summarize this text: {TEXT_PLACEHOLDER}",
             "description": "Basic instruction without context or examples"
         },
-        "standard": {
+        CONFIG_STANDARD: {
             # TODO: Create a more detailed summarization prompt with guidance
-            "prompt": "Please provide a concise summary of the following text, focusing on the main points: [TEXT_PLACEHOLDER]",
+            "prompt": f"Please provide a concise summary of the following text, focusing on the main points: {TEXT_PLACEHOLDER}",
             "description": "Clear instruction with specific guidance"
         },
-        "premium": {
+        CONFIG_PREMIUM: {
             # TODO: Create a comprehensive prompt with role-playing and detailed requirements
-            "prompt": "You are an expert analyst. Provide a comprehensive summary with: 1) Main points, 2) Key evidence, 3) Conclusions. Format with headings: [TEXT_PLACEHOLDER]",
+            "prompt": f"You are an expert analyst. Provide a comprehensive summary with: 1) Main points, 2) Key evidence, 3) Conclusions. Format with headings: {TEXT_PLACEHOLDER}",
             "description": "Detailed instruction with role, structure, and formatting requirements"
         }
     },
-    {
-        "category": CATEGORY_CREATIVE_WRITING,
-        "minimal": {
+    CATEGORY_CREATIVE_WRITING: {
+        CONFIG_MINIMAL: {
             # TODO: Create a simple creative writing prompt
             "prompt": "Write a story about a robot.",
             "description": "Simple creative prompt without constraints"
         },
-        "standard": {
+        CONFIG_STANDARD: {
             # TODO: Create a structured creative prompt with specifications
             "prompt": "Write a short story (200-300 words) about a robot discovering emotions. Include dialogue.",
             "description": "Structured creative prompt with length and content specifications"
         },
-        "premium": {
+        CONFIG_PREMIUM: {
             # TODO: Create a comprehensive creative prompt with detailed requirements
             "prompt": "You are a skilled author. Write a compelling story (200-300 words) about a robot discovering emotions. Requirements: 1) Meaningful dialogue, 2) Emotional journey, 3) Narrative arc, 4) Vivid descriptions.",
             "description": "Comprehensive creative prompt with role-playing, detailed requirements, and quality guidelines"
         }
     },
-    {
-        "category": CATEGORY_PROBLEM_SOLVING,
-        "minimal": {
+    CATEGORY_PROBLEM_SOLVING: {
+        CONFIG_MINIMAL: {
             # TODO: Create a direct business question
             "prompt": "How do I reduce customer churn?",
             "description": "Direct question without context"
         },
-        "standard": {
+        CONFIG_STANDARD: {
             # TODO: Create a contextualized business question
             "prompt": "I'm running a SaaS business with 15% monthly churn. What strategies can reduce churn?",
             "description": "Contextualized question with specific details"
         },
-        "premium": {
+        CONFIG_PREMIUM: {
             # TODO: Create a comprehensive business consultation prompt
             "prompt": "You are a business consultant. My SaaS has 15% churn, $50 ARPU, 6-month LTV. Provide: 1) Root cause analysis, 2) Actionable strategies, 3) Implementation timeline, 4) ROI projections.",
             "description": "Expert consultation prompt with detailed context, specific deliverables, and structured output requirements"
         }
     }
-]
+}
 
 
 # TODO: Create sample text for testing summarization prompts
@@ -194,7 +195,7 @@ PROMPT_STRATEGIES = [
 SAMPLE_TEXT = """
 Most people think they're good at prompting. They're not — they're good at chatting with AI, and that skill is rapidly becoming table stakes. Same model, same Tuesday, and the difference between the person who spends forty minutes cleaning up 70%-right output and the person who comes back to finished deliverables isn't talent. It's that she's practicing a discipline most people don't know exists yet. Three model releases in February alone shipped autonomous-agent capabilities that make chat-based prompting feel like bringing a phone book to a search-engine fight. The models stopped being conversation partners and started being workers — workers that run for days without checking in. And directing a worker you can't supervise in real time is a fundamentally different skill than having a productive conversation.
 
-So I'm naming four disciplines hiding inside the word "prompting." Prompt Craft — the original, synchronous skill — is now just the ability to type, no longer differentiating. Context Engineering is where the action is: your prompt might be 200 tokens, but the context window it lands in might be a million. The other 99.98% is context engineering. Anthropic's data is brutal — on a needle-in-a-million-tokens test, Sonnet 4.5 scored 18.5%. The window is a filing cabinet with no index.
+I'm naming four disciplines hiding inside the word "prompting." Prompt Craft — the original, synchronous skill — is now just the ability to type, no longer differentiating. Context Engineering is where the action is: your prompt might be 200 tokens, but the context window it lands in might be a million. The other 99.98% is context engineering. Anthropic's data is brutal — on a needle-in-a-million-tokens test, Sonnet 4.5 scored 18.5%. The window is a filing cabinet with no index.
 
 Intent Engineering tells agents what to want. Klarna learned this the hard way: excellent context, missing intent, and $40 million in projected savings cratered into a customer-satisfaction crisis. Specification Engineering — the newest discipline — is writing documents autonomous agents can execute over days: complete, structured, with acceptance criteria and constraints baked in.
 
@@ -424,16 +425,22 @@ def test_prompt_strategy(category: str, strategy_type: str):
         dict: Results including quality scores, costs, and effectiveness metrics
     """
     # TODO: Find the specified strategy
-    strategy_data = None
-    # Hint: Loop through PROMPT_STRATEGIES to find matching category
-    
-    if not strategy_data:
+    strategy_category = PROMPT_STRATEGIES.get(category)
+    if not strategy_category:
         print(f"❌ Category '{category}' not found")
         return None
-    
+       
     # TODO: Get prompt info and config
-    prompt_info = None
-    config = None
+    prompt_info = strategy_category.get(strategy_type)
+    if not prompt_info:
+        print(f"❌ Strategy type '{strategy_type}' in category {category}")
+        return None
+    
+    config = PROMPT_CONFIGS.get(strategy_type)
+    if not config:
+        print(f"❌ Config not found in strategy type '{strategy_type}' in category {category}")
+        return None
+    
     parameters = config['parameters']
     print(f"\n🧪 TESTING PROMPT STRATEGY: {category.upper()} - {strategy_type.upper()}")
     print(f"Description: {prompt_info['description']}")
@@ -443,16 +450,19 @@ def test_prompt_strategy(category: str, strategy_type: str):
     # TODO: Prepare the prompt (replace placeholder if needed)
     prompt = prompt_info["prompt"]
     # Hint: Replace [TEXT_PLACEHOLDER] with SAMPLE_TEXT if present
+    if TEXT_PLACEHOLDER in prompt:
+        prompt = prompt.replace(TEXT_PLACEHOLDER, SAMPLE_TEXT)
     
     # TODO: Make API call with current configuration
-    result = None
+    result = call_openai_api(prompt, config)
     
     if result['success']:
         # TODO: Score the response quality
-        quality_score = 0
+        source = SAMPLE_TEXT if category == CATEGORY_TASK_COMPLETION else None
+        quality_score = score_response_quality(result["response"], category, source)
         
         # TODO: Calculate cost-effectiveness
-        cost_effectiveness = 0
+        cost_effectiveness = calculate_cost_effectiveness(quality_score, result["total_cost"])
         
         # TODO: Display results with clear formatting
         print(f"\n📝 RESPONSE:")
@@ -469,7 +479,7 @@ def test_prompt_strategy(category: str, strategy_type: str):
         print(f"   Output Cost: ${result['output_cost']:.6f}")
         print(f"   Total Cost: ${result['total_cost']:.6f}")
         print(f"   Cost per Token: ${result['cost_per_token']:.8f}")
-        print(f"📈 Cost-Effectiveness: {cost_effectiveness:.2f} quality points per $1000")
+        print(f"📈 Cost-Effectiveness: {cost_effectiveness:.2f} quality points per $")
         
         # TODO: Return structured results
         return {
@@ -540,10 +550,9 @@ def compare_prompt_strategies(category: str):
 
 
 def main():
-    pass
     # TODO: Example usage - uncomment and test when ready
     # Test a single strategy
-    # minimal_summary = test_prompt_strategy("task_completion", "minimal")
+    minimal_summary = test_prompt_strategy(CATEGORY_TASK_COMPLETION, CONFIG_MINIMAL)
 
     # TODO: Additional test examples you can run:
     # Compare all strategies for a category
@@ -570,7 +579,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Implement call_openai_api() function with cost calculation
 ✅ Complete score_response_quality() with category-specific logic
 ✅ Implement calculate_cost_effectiveness() function
-□ Complete test_prompt_strategy() function
+✅ Complete test_prompt_strategy() function
 □ Implement compare_prompt_strategies() function
 □ Test your implementation with the example usage
 □ Add your own API key and test the complete workflow
