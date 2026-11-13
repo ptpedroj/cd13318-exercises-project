@@ -212,7 +212,7 @@ def call_openai_api(prompt: str, config: Dict) -> Dict:
         
         # TODO: Calculate latency in milliseconds
         end_time = time.time()
-        latency = (end_time - start_time) * 1000
+        latency = round((end_time - start_time) * 1000, 2)
         
         # TODO: Calculate cost based on token usage and model pricing
         # Hint: cost = (tokens / 1000) * price_per_1k_tokens
@@ -232,7 +232,7 @@ def call_openai_api(prompt: str, config: Dict) -> Dict:
             "input_cost": input_cost,
             "output_cost": output_cost,
             "total_cost": total_cost,
-            "cost_per_token": total_cost / response.usage.total_tokens,
+            "cost_per_token": total_cost / response.usage.total_tokens if response.usage.total_tokens else 0,
             "success": True,
             "error": None
         }
