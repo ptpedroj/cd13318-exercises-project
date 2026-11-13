@@ -402,7 +402,7 @@ def calculate_cost_effectiveness(quality_score: int, total_cost: float) -> float
     
     # TODO: Calculate and return cost-effectiveness ratio
     # Hint: quality_score / total_cost, multiply by 1000 for readability
-    return 0
+    return quality_score / total_cost 
 
 
 def test_prompt_strategy(category: str, strategy_type: str):
@@ -569,7 +569,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Write substantial SAMPLE_TEXT for summarization testing
 ✅ Implement call_openai_api() function with cost calculation
 ✅ Complete score_response_quality() with category-specific logic
-□ Implement calculate_cost_effectiveness() function
+✅ Implement calculate_cost_effectiveness() function
 □ Complete test_prompt_strategy() function
 □ Implement compare_prompt_strategies() function
 □ Test your implementation with the example usage
