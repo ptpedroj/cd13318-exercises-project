@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
 import numpy as np
+import re
 
 try:
     from dotenv import load_dotenv
@@ -25,6 +26,7 @@ except ImportError:
 
 # Read the key from the environment at runtime (never commit real keys).
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+
 
 _client: Optional[OpenAI] = None
 
@@ -39,6 +41,21 @@ def get_client(api_key=OPENAI_API_KEY) -> OpenAI:
             base_url="https://openai.vocareum.com/v1" if api_key.startswith("voc") else None
         )
     return _client
+
+
+def embed(texts: list[str]) -> list[np.array]:
+    """Embed one or more texts in a single API call; one ndarray per text."""
+    client = get_client()
+    response = client.embeddings.create(model="text-embedding-3-small", input=texts)
+    return [np.array(d.embedding, dtype=float) for d in response.data]
+
+
+def cosine(a, b) -> float:
+    """Cosine similarity of two vectors (numpy)."""
+    a = np.asarray(a, dtype=float) # allows for bare lists though ndarrays are expected
+    b = np.asarray(b, dtype=float)
+    denominator = np.linalg.norm(a) * np.linalg.norm(b)
+    return float(np.dot(a, b) / denominator) if denominator else 0.
 
 
 # TODO: Define prompt configurations for different cost-effectiveness strategies
@@ -82,6 +99,7 @@ PROMPT_CONFIGS = {
     }
 }
 
+
 # TODO: Define pricing information for cost calculations
 # Research current OpenAI pricing and fill in the rates per 1K tokens in USD
 MODEL_PRICING = {
@@ -105,11 +123,17 @@ MODEL_PRICING = {
     }
 }
 
+
+CATEGORY_TASK_COMPLETION = "task_completion"
+CATEGORY_CREATIVE_WRITING = "creative_writing"
+CATEGORY_PROBLEM_SOLVING = "problem_solving"
+
+
 # TODO: Define prompt strategies for different task categories
 # Create test cases that demonstrate how prompt complexity affects quality and cost
 PROMPT_STRATEGIES = [
     {
-        "category": "task_completion",
+        "category": CATEGORY_TASK_COMPLETION,
         "minimal": {
             # TODO: Create a basic summarization prompt
             "prompt": "Summarize this text: [TEXT_PLACEHOLDER]",
@@ -127,7 +151,7 @@ PROMPT_STRATEGIES = [
         }
     },
     {
-        "category": "creative_writing",
+        "category": CATEGORY_CREATIVE_WRITING,
         "minimal": {
             # TODO: Create a simple creative writing prompt
             "prompt": "Write a story about a robot.",
@@ -145,7 +169,7 @@ PROMPT_STRATEGIES = [
         }
     },
     {
-        "category": "problem_solving",
+        "category": CATEGORY_PROBLEM_SOLVING,
         "minimal": {
             # TODO: Create a direct business question
             "prompt": "How do I reduce customer churn?",
@@ -164,6 +188,7 @@ PROMPT_STRATEGIES = [
     }
 ]
 
+
 # TODO: Create sample text for testing summarization prompts
 # Write a substantial paragraph (200-300 words) about a relevant topic
 SAMPLE_TEXT = """
@@ -177,6 +202,7 @@ The 2025 mental model — "write good instructions" — only works if you're alw
 
 Here's the part nobody puts in "how to prompt" courses: this discipline transfers. Tobi Lütke found that stating problems with complete context made him a better CEO, not just a better AI user. Clear requests, stated acceptance criteria, articulated constraints, decomposed projects — those are the four disciplines of AI input, and they're also just the disciplines of effective leadership. The specification is the prompt now. And the specification, done right, is just what clear thinking always looked like — finally made explicit, because the machines won't let us be lazy anymore.
 """
+
 
 def call_openai_api(prompt: str, config: Dict) -> Dict:
     """
@@ -259,7 +285,40 @@ def call_openai_api(prompt: str, config: Dict) -> Dict:
             "success": False, "error": str(e)
         }
 
-def score_response_quality(response: str, category: str) -> int:
+
+def _heuristic_signal(response, category, source=None) -> float:
+    lower = response.lower()
+    words = lower.split()
+    n = len(words)
+    distinct = len(set(words)) / max(n, 1) # lexical variety
+    has_structure = bool(re.search(r"\d+[\.)]|step|first|second|finally|—", lower))
+    has_dialogue = '"' in response or "–" in response
+
+    if category == CATEGORY_TASK_COMPLETION:
+        score = 0.4 * (n >= 25) + 0.3 * (n <=200) + 0.2 * distinct + 0.1 * has_structure
+        if source:
+            src = set(w.lower() for w in source.split() if len(w) > 3)
+            captured = sum(1 for w in words if w in src)
+            score = 0.5 * score + 0.5 * min(1, captured / max(len(src), 1))
+    elif category == CATEGORY_CREATIVE_WRITING:
+        score = 0.4 * (80 <= n <= 400) + 0.3 * has_dialogue + 0.2 * distinct + 0.1 * has_structure
+    elif category == CATEGORY_PROBLEM_SOLVING:
+        score = 0.4 * (n >= 40) + 0.3 * has_structure + 0.2 * distinct + 0.1 * (n >=80)
+    else:
+        score = 0.5
+    
+    return max(0.0, min(1.0, score))
+
+
+# per-category weight on EMBEDDINGS (meaning); heuristics get (1 - alpha)
+ALPHA = {
+    CATEGORY_TASK_COMPLETION:  0.55,   # correctness of content matters most
+    CATEGORY_PROBLEM_SOLVING:  0.35,
+    CATEGORY_CREATIVE_WRITING: 0.30,   # quality is subjective → trust heuristics more
+}
+
+
+def score_response_quality(response: str, category: str, source: Optional[str] = None) -> int:
     """
     Evaluate the quality of responses on a 1-5 scale based on task category.
     
@@ -275,35 +334,52 @@ def score_response_quality(response: str, category: str) -> int:
     Returns:
         int: Score from 1-5 where 5 is excellent quality, 1 is poor quality
     """
+
+    """ 
+     Commented out because the scoring is drastically refactored    
+     response_lower = response.lower()
+     word_count = len(response.split())
+     
+     # TODO: Implement scoring for task_completion category
+     if category == CATEGORY_TASK_COMPLETION:
+         # Hint: Look for summary indicators like "main", "key", "important"
+         # Check for appropriate length and structure
+         # Return score based on completeness and quality
+         pass
+             
+     # TODO: Implement scoring for creative_writing category
+     elif category == CATEGORY_CREATIVE_WRITING:
+         # Hint: Look for narrative elements, dialogue, descriptive language
+         # Check for story completeness and creativity
+         # Consider word count and narrative structure
+         pass
+             
+     # TODO: Implement scoring for problem_solving category
+     elif category == CATEGORY_PROBLEM_SOLVING:
+         # Hint: Look for strategy words, analysis terms, actionable advice
+         # Check for comprehensiveness and practical value
+         # Consider depth of analysis and actionability
+         pass
+     
+     return 3  # Default middle score
+     """
+ 
     if not response:
         return 0
-        
-    response_lower = response.lower()
-    word_count = len(response.split())
-    
-    # TODO: Implement scoring for task_completion category
-    if category == "task_completion":
-        # Hint: Look for summary indicators like "main", "key", "important"
-        # Check for appropriate length and structure
-        # Return score based on completeness and quality
-        pass
-            
-    # TODO: Implement scoring for creative_writing category
-    elif category == "creative_writing":
-        # Hint: Look for narrative elements, dialogue, descriptive language
-        # Check for story completeness and creativity
-        # Consider word count and narrative structure
-        pass
-            
-    # TODO: Implement scoring for problem_solving category
-    elif category == "problem_solving":
-        # Hint: Look for strategy words, analysis terms, actionable advice
-        # Check for comprehensiveness and practical value
-        # Consider depth of analysis and actionability
-        pass
-    
-    return 3  # Default middle score
 
+    heuristic = _heuristic_signal(response, category, source)
+    if source:
+        resp_emb, src_emb = embed([response, source])
+        embedding = cosine(resp_emb, src_emb)
+    else:
+        embedding = 0.0
+
+    embedding = max(0.0, min(1.0, embedding)) # clip to 0..1
+    alpha = ALPHA.get(category, 0.4)
+    blended = (1 - alpha) * heuristic + alpha * embedding
+    return 1 + round(blended * 4) # 0..1 -> 1..5
+        
+ 
 def calculate_cost_effectiveness(quality_score: int, total_cost: float) -> float:
     """
     Calculate cost-effectiveness ratio for prompt strategies.
@@ -327,6 +403,7 @@ def calculate_cost_effectiveness(quality_score: int, total_cost: float) -> float
     # TODO: Calculate and return cost-effectiveness ratio
     # Hint: quality_score / total_cost, multiply by 1000 for readability
     return 0
+
 
 def test_prompt_strategy(category: str, strategy_type: str):
     """
@@ -412,6 +489,7 @@ def test_prompt_strategy(category: str, strategy_type: str):
         print(f"❌ Failed: {result['error']}")
         return None
 
+
 def compare_prompt_strategies(category: str):
     """
     Compare all prompt strategies for a given category and analyze trade-offs.
@@ -459,6 +537,7 @@ def compare_prompt_strategies(category: str):
     else:
         print("❌ Insufficient results for comparison")
         return results
+
 
 def main():
     pass
