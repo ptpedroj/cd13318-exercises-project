@@ -83,17 +83,17 @@ PROMPT_STRATEGIES = [
         "category": "task_completion",
         "minimal": {
             # TODO: Create a basic summarization prompt
-            "prompt": "",
+            "prompt": "Summarize this text: [TEXT_PLACEHOLDER]",
             "description": "Basic instruction without context or examples"
         },
         "standard": {
             # TODO: Create a more detailed summarization prompt with guidance
-            "prompt": "",
+            "prompt": "Please provide a concise summary of the following text, focusing on the main points: [TEXT_PLACEHOLDER]",
             "description": "Clear instruction with specific guidance"
         },
         "premium": {
             # TODO: Create a comprehensive prompt with role-playing and detailed requirements
-            "prompt": "",
+            "prompt": "You are an expert analyst. Provide a comprehensive summary with: 1) Main points, 2) Key evidence, 3) Conclusions. Format with headings: [TEXT_PLACEHOLDER]",
             "description": "Detailed instruction with role, structure, and formatting requirements"
         }
     },
@@ -101,17 +101,17 @@ PROMPT_STRATEGIES = [
         "category": "creative_writing",
         "minimal": {
             # TODO: Create a simple creative writing prompt
-            "prompt": "",
+            "prompt": "Write a story about a robot.",
             "description": "Simple creative prompt without constraints"
         },
         "standard": {
             # TODO: Create a structured creative prompt with specifications
-            "prompt": "",
+            "prompt": "Write a short story (200-300 words) about a robot discovering emotions. Include dialogue.",
             "description": "Structured creative prompt with length and content specifications"
         },
         "premium": {
             # TODO: Create a comprehensive creative prompt with detailed requirements
-            "prompt": "",
+            "prompt": "You are a skilled author. Write a compelling story (200-300 words) about a robot discovering emotions. Requirements: 1) Meaningful dialogue, 2) Emotional journey, 3) Narrative arc, 4) Vivid descriptions.",
             "description": "Comprehensive creative prompt with role-playing, detailed requirements, and quality guidelines"
         }
     },
@@ -119,17 +119,17 @@ PROMPT_STRATEGIES = [
         "category": "problem_solving",
         "minimal": {
             # TODO: Create a direct business question
-            "prompt": "",
+            "prompt": "How do I reduce customer churn?",
             "description": "Direct question without context"
         },
         "standard": {
             # TODO: Create a contextualized business question
-            "prompt": "",
+            "prompt": "I'm running a SaaS business with 15% monthly churn. What strategies can reduce churn?",
             "description": "Contextualized question with specific details"
         },
         "premium": {
             # TODO: Create a comprehensive business consultation prompt
-            "prompt": "",
+            "prompt": "You are a business consultant. My SaaS has 15% churn, $50 ARPU, 6-month LTV. Provide: 1) Root cause analysis, 2) Actionable strategies, 3) Implementation timeline, 4) ROI projections.",
             "description": "Expert consultation prompt with detailed context, specific deliverables, and structured output requirements"
         }
     }
@@ -439,7 +439,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Import all necessary libraries
 ✅ Complete PROMPT_CONFIGS with appropriate models and parameters
 ✅ Fill in MODEL_PRICING with current OpenAI pricing
-□ Create comprehensive PROMPT_STRATEGIES for all categories and types
+✅ Create comprehensive PROMPT_STRATEGIES for all categories and types
 □ Write substantial SAMPLE_TEXT for summarization testing
 □ Implement call_openai_api() function with cost calculation
 □ Complete score_response_quality() with category-specific logic
