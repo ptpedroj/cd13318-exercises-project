@@ -93,7 +93,7 @@ PROMPT_CONFIGS = {
     CONFIG_PREMIUM: {
         "parameters": {
             # TODO: Choose high-performance model
-            "model": "gpt-4-turbo",
+            "model": "gpt-4.1",
             # TODO: Set temperature for consistency (hint: lower for more consistent)
             "temperature": 0.5,
             # TODO: Set higher max_completion_tokens for detailed responses
@@ -119,11 +119,11 @@ MODEL_PRICING = {
         # TODO: Add output token price
         "output": 10. / 1_000_000
     },
-    "gpt-4-turbo": {
+    "gpt-4.1": {
         # TODO: Add input token price
-        "input": 10. / 1_000_000,
+        "input": 2. / 1_000_000,
         # TODO: Add output token price
-        "output": 30. / 1_000_000
+        "output": 8. / 1_000_000
     }
 }
 
@@ -287,27 +287,80 @@ def call_openai_api(prompt: str, config: Dict) -> Dict:
         }
 
 
+# --- Heuristic tuning knobs (weights per category sum to 1.0) ---
+TASK_MIN_WORDS, TASK_MAX_WORDS = 25, 200
+CREATIVE_MIN_WORDS, CREATIVE_MAX_WORDS = 150, 400
+PROBLEM_MIN_WORDS, PROBLEM_FULL_WORDS = 100, 200
+# Observed cosine(summary, source) with text-embedding-3-small spans ~0.55 (truncated) to ~0.87 (full);
+# rescale that band to 0..1 so good summaries can actually reach the top of the scale
+COSINE_LOW, COSINE_HIGH = 0.55, 0.90
+MIN_CONTENT_WORD_LEN = 3      # words must be longer than this to count as "content" words
+TARGET_SOURCE_COVERAGE = 0.25 # a good summary should reuse ~25% of the source's key terms
+GROUNDING_WEIGHT = 0.5        # share of the task score given to source grounding
+DEFAULT_HEURISTIC = 0.5       # score for unknown categories
+
+HEURISTIC_WEIGHTS = {
+    CATEGORY_TASK_COMPLETION:  {"min_len": 0.1, "max_len": 0.2, "distinct": 0.3, "structure": 0.4},
+    CATEGORY_CREATIVE_WRITING: {"length": 0.1, "dialogue": 0.3, "distinct": 0.4, "paragraphs": 0.2},
+    CATEGORY_PROBLEM_SOLVING:  {"min_len": 0.2, "structure": 0.4, "distinct": 0.3, "full_len": 0.1},
+}
+
+_STRUCTURE_RE = re.compile(r"^\s*(?:[-*•]|\d+[.)])\s|\b(?:step|first|second|finally)\b", re.I | re.M)
+_DIALOGUE_RE = re.compile(r'["“”]')
+
+
+def _ramp_up(n, target):
+    """0 -> 1 as n grows toward `target` (no cliff at the threshold)."""
+    return min(n / target, 1.0)
+
+
+def _ramp_down(n, limit):
+    """1 up to `limit`, then decays smoothly (limit/n) for longer responses."""
+    return 1.0 if n <= limit else limit / n
+
+
+def _source_grounding(words, source) -> float:
+    """Blend of precision (response stays on source) and capped coverage (response captures source)."""
+    content = lambda toks: {w for w in toks if len(w) > MIN_CONTENT_WORD_LEN}
+    src = content(re.findall(r"\w+", source.lower()))
+    resp = content(words)
+    if not src or not resp:
+        return 0.0
+    overlap = len(resp & src)
+    precision = overlap / len(resp)
+    coverage = min(1.0, (overlap / len(src)) / TARGET_SOURCE_COVERAGE)
+    return 0.5 * precision + 0.5 * coverage
+
+
 def _heuristic_signal(response, category, source=None) -> float:
-    lower = response.lower()
-    words = lower.split()
+    words = re.findall(r"\w+", response.lower())
     n = len(words)
     distinct = len(set(words)) / max(n, 1) # lexical variety
-    has_structure = bool(re.search(r"\d+[\.)]|step|first|second|finally|—", lower))
-    has_dialogue = '"' in response or "–" in response
+    has_structure = bool(_STRUCTURE_RE.search(response))
+    has_dialogue = bool(_DIALOGUE_RE.search(response))
+    has_paragraphs = "\n\n" in response.strip()
 
+    w = HEURISTIC_WEIGHTS.get(category)
     if category == CATEGORY_TASK_COMPLETION:
-        score = 0.4 * (n >= 25) + 0.3 * (n <=200) + 0.2 * distinct + 0.1 * has_structure
+        score = (w["min_len"] * _ramp_up(n, TASK_MIN_WORDS)
+                 + w["max_len"] * _ramp_down(n, TASK_MAX_WORDS)
+                 + w["distinct"] * distinct
+                 + w["structure"] * has_structure)
         if source:
-            src = set(w.lower() for w in source.split() if len(w) > 3)
-            captured = sum(1 for w in words if w in src)
-            score = 0.5 * score + 0.5 * min(1, captured / max(len(src), 1))
+            score = (1 - GROUNDING_WEIGHT) * score + GROUNDING_WEIGHT * _source_grounding(words, source)
     elif category == CATEGORY_CREATIVE_WRITING:
-        score = 0.4 * (80 <= n <= 400) + 0.3 * has_dialogue + 0.2 * distinct + 0.1 * has_structure
+        score = (w["length"] * _ramp_up(n, CREATIVE_MIN_WORDS) * _ramp_down(n, CREATIVE_MAX_WORDS)
+                 + w["dialogue"] * has_dialogue
+                 + w["distinct"] * distinct
+                 + w["paragraphs"] * has_paragraphs)
     elif category == CATEGORY_PROBLEM_SOLVING:
-        score = 0.4 * (n >= 40) + 0.3 * has_structure + 0.2 * distinct + 0.1 * (n >=80)
+        score = (w["min_len"] * _ramp_up(n, PROBLEM_MIN_WORDS)
+                 + w["structure"] * has_structure
+                 + w["distinct"] * distinct
+                 + w["full_len"] * _ramp_up(n, PROBLEM_FULL_WORDS))
     else:
-        score = 0.5
-    
+        score = DEFAULT_HEURISTIC
+
     return max(0.0, min(1.0, score))
 
 
@@ -369,13 +422,13 @@ def score_response_quality(response: str, category: str, source: Optional[str] =
         return 0
 
     heuristic = _heuristic_signal(response, category, source)
-    if source:
-        resp_emb, src_emb = embed([response, source])
-        embedding = cosine(resp_emb, src_emb)
-    else:
-        embedding = 0.0
+    if not source:
+        # Nothing to compare against: skip the embedding call and rely on heuristics alone
+        return 1 + round(heuristic * 4) # 0..1 -> 1..5
 
-    embedding = max(0.0, min(1.0, embedding)) # clip to 0..1
+    resp_emb, src_emb = embed([response, source])
+    similarity = cosine(resp_emb, src_emb)
+    embedding = max(0.0, min(1.0, (similarity - COSINE_LOW) / (COSINE_HIGH - COSINE_LOW))) # rescale + clip to 0..1
     alpha = ALPHA.get(category, 0.4)
     blended = (1 - alpha) * heuristic + alpha * embedding
     return 1 + round(blended * 4) # 0..1 -> 1..5
@@ -406,7 +459,7 @@ def calculate_cost_effectiveness(quality_score: int, total_cost: float) -> float
     return quality_score / total_cost 
 
 
-def test_prompt_strategy(category: str, strategy_type: str):
+def test_prompt_strategy(category: str, strategy_type: str) -> Optional[Dict]:
     """
     Test a specific prompt strategy and analyze its cost-effectiveness.
     
@@ -520,7 +573,7 @@ def compare_prompt_strategies(category: str):
     print("=" * 80)
     
     results = {}
-    strategy_types = ["minimal", "standard", "premium"]
+    strategy_types = [CONFIG_MINIMAL, CONFIG_STANDARD, CONFIG_PREMIUM]
     
     # TODO: Test each strategy type
     for strategy_type in strategy_types:
