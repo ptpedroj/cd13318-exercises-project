@@ -305,6 +305,7 @@ MIN_CONTENT_WORD_LEN = 3      # words must be longer than this to count as "cont
 TARGET_SOURCE_COVERAGE = 0.25 # a good summary should reuse ~25% of the source's key terms
 GROUNDING_WEIGHT = 0.5        # share of the task score given to source grounding
 DEFAULT_HEURISTIC = 0.5       # score for unknown categories
+MAX_INCOMPLETE_SCORE = 4      # a truncated answer (cut off by the token cap) can't reach 5
 DISTINCT_WINDOW = 50          # words per window for length-independent lexical variety
 REQUIREMENT_WEIGHT = 0.3      # share of the score given to "did it cover what the prompt asked for"
 REQUIREMENT_PREFIX_LEN = 5    # match "analysis"/"analyses" etc. on their first 5 letters
@@ -416,6 +417,24 @@ def _to_scale(blended: float) -> int:
     return 1 + round(stretched * 4)
 
 
+def _is_truncated(response: str) -> bool:
+    """True when the response was likely cut off by the token cap.
+
+    A truncated answer ends mid-thought rather than on terminal punctuation
+    (. ! ?), so it never actually finished the task and shouldn't be eligible
+    for a perfect 5 — this keeps a barely-complete answer from tying a
+    fully-written one. Closing quotes/parentheses are peeled back first so a
+    response that ends on a quoted line still reads as complete."""
+    text = response.strip()
+    if not text:
+        return True
+    if text[-1] in "\"”')]":
+        text = text[:-1].rstrip()
+    if not text:
+        return True
+    return text[-1] not in ".!?"
+
+
 # per-category weight on EMBEDDINGS (meaning); heuristics get (1 - alpha)
 ALPHA = {
     CATEGORY_TASK_COMPLETION:  0.55,   # correctness of content matters most
@@ -477,14 +496,21 @@ def score_response_quality(response: str, category: str, source: Optional[str] =
     heuristic = _heuristic_signal(response, category, source, prompt)
     if not source:
         # Nothing to compare against: skip the embedding call and rely on heuristics alone
-        return _to_scale(heuristic)
+        score = _to_scale(heuristic)
+    else:
+        resp_emb, src_emb = embed([response, source])
+        similarity = cosine(resp_emb, src_emb)
+        embedding = max(0.0, min(1.0, (similarity - COSINE_LOW) / (COSINE_HIGH - COSINE_LOW))) # rescale + clip to 0..1
+        alpha = ALPHA.get(category, 0.4)
+        blended = (1 - alpha) * heuristic + alpha * embedding
+        score = _to_scale(blended)
 
-    resp_emb, src_emb = embed([response, source])
-    similarity = cosine(resp_emb, src_emb)
-    embedding = max(0.0, min(1.0, (similarity - COSINE_LOW) / (COSINE_HIGH - COSINE_LOW))) # rescale + clip to 0..1
-    alpha = ALPHA.get(category, 0.4)
-    blended = (1 - alpha) * heuristic + alpha * embedding
-    return _to_scale(blended)
+    # A truncated answer was cut off by the model's completion cap and never
+    # finished the task, so it can't earn a perfect 5 even if its heuristics
+    # scored high. This keeps a barely-complete answer from tying a full one.
+    if _is_truncated(response):
+        score = min(score, MAX_INCOMPLETE_SCORE)
+    return score
         
  
 def calculate_cost_effectiveness(quality_score: int, total_cost: float) -> float:
