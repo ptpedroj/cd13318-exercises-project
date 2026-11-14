@@ -303,6 +303,9 @@ TARGET_SOURCE_COVERAGE = 0.25 # a good summary should reuse ~25% of the source's
 GROUNDING_WEIGHT = 0.5        # share of the task score given to source grounding
 DEFAULT_HEURISTIC = 0.5       # score for unknown categories
 DISTINCT_WINDOW = 50          # words per window for length-independent lexical variety
+REQUIREMENT_WEIGHT = 0.3      # share of the score given to "did it cover what the prompt asked for"
+REQUIREMENT_PREFIX_LEN = 5    # match "analysis"/"analyses" etc. on their first 5 letters
+MIN_REQUIREMENTS = 2          # a prompt needs at least this many numbered items to be checked
 
 HEURISTIC_WEIGHTS = {
     CATEGORY_TASK_COMPLETION:  {"min_len": 0.1, "max_len": 0.2, "distinct": 0.3, "structure": 0.4},
@@ -312,6 +315,11 @@ HEURISTIC_WEIGHTS = {
 
 _STRUCTURE_RE = re.compile(r"^\s*(?:[-*•]|\d+[.)])\s|\b(?:step|first|second|finally)\b", re.I | re.M)
 _DIALOGUE_RE = re.compile(r'["“”]')
+_REQUIREMENT_RE = re.compile(r"\d+\)\s*([^,.\d]+)")  # "1) Root cause analysis," -> "Root cause analysis"
+_REQUIREMENT_STOPWORDS = {"and", "the", "for", "with", "that"}
+# Only categories whose requirements show up as words in the text; creative asks for qualities
+# ("narrative arc", "meaningful dialogue") that keyword matching would wrongly mark as missing.
+REQUIREMENT_CATEGORIES = {CATEGORY_TASK_COMPLETION, CATEGORY_PROBLEM_SOLVING}
 
 
 def _ramp_up(n, target):
@@ -334,6 +342,20 @@ def _lexical_variety(words, window=DISTINCT_WINDOW) -> float:
     return sum(ratios) / len(ratios)
 
 
+def _requirement_coverage(words, prompt) -> Optional[float]:
+    """Share of the prompt's numbered requirements ("1) ..., 2) ...") the response mentions.
+    Each requirement is scored by the fraction of its keywords found, then averaged.
+    Returns None when the prompt lists fewer than MIN_REQUIREMENTS items (nothing to check)."""
+    requirements = [[w for w in re.findall(r"\w+", item.lower()) if len(w) >= 3 and w not in _REQUIREMENT_STOPWORDS]
+                    for item in _REQUIREMENT_RE.findall(prompt)]
+    requirements = [keywords for keywords in requirements if keywords]
+    if len(requirements) < MIN_REQUIREMENTS:
+        return None
+    stems = {w[:REQUIREMENT_PREFIX_LEN] for w in words}
+    found = [sum(k[:REQUIREMENT_PREFIX_LEN] in stems for k in keywords) / len(keywords) for keywords in requirements]
+    return sum(found) / len(found)
+
+
 def _source_grounding(words, source) -> float:
     """Blend of precision (response stays on source) and capped coverage (response captures source)."""
     content = lambda toks: {w for w in toks if len(w) > MIN_CONTENT_WORD_LEN}
@@ -347,7 +369,7 @@ def _source_grounding(words, source) -> float:
     return 0.5 * precision + 0.5 * coverage
 
 
-def _heuristic_signal(response, category, source=None) -> float:
+def _heuristic_signal(response, category, source=None, prompt=None) -> float:
     words = re.findall(r"\w+", response.lower())
     n = len(words)
     distinct = _lexical_variety(words) # lexical variety
@@ -377,6 +399,11 @@ def _heuristic_signal(response, category, source=None) -> float:
     else:
         score = DEFAULT_HEURISTIC
 
+    if prompt and category in REQUIREMENT_CATEGORIES:
+        coverage = _requirement_coverage(words, prompt)
+        if coverage is not None:
+            score = (1 - REQUIREMENT_WEIGHT) * score + REQUIREMENT_WEIGHT * coverage
+
     return max(0.0, min(1.0, score))
 
 
@@ -388,7 +415,8 @@ ALPHA = {
 }
 
 
-def score_response_quality(response: str, category: str, source: Optional[str] = None) -> int:
+def score_response_quality(response: str, category: str, source: Optional[str] = None,
+                           prompt: Optional[str] = None) -> int:
     """
     Evaluate the quality of responses on a 1-5 scale based on task category.
     
@@ -437,7 +465,7 @@ def score_response_quality(response: str, category: str, source: Optional[str] =
     if not response:
         return 0
 
-    heuristic = _heuristic_signal(response, category, source)
+    heuristic = _heuristic_signal(response, category, source, prompt)
     if not source:
         # Nothing to compare against: skip the embedding call and rely on heuristics alone
         return 1 + round(heuristic * 4) # 0..1 -> 1..5
@@ -528,7 +556,7 @@ def test_prompt_strategy(category: str, strategy_type: str) -> Optional[Dict]:
     if result['success']:
         # TODO: Score the response quality
         source = SAMPLE_TEXT if category == CATEGORY_TASK_COMPLETION else None
-        quality_score = score_response_quality(result["response"], category, source)
+        quality_score = score_response_quality(result["response"], category, source, prompt_info["prompt"])
         
         # TODO: Calculate cost-effectiveness
         cost_effectiveness = calculate_cost_effectiveness(quality_score, result["total_cost"])
