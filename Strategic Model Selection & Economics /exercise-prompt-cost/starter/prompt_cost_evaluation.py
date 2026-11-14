@@ -632,6 +632,38 @@ def test_prompt_strategy(category: str, strategy_type: str) -> Optional[Dict]:
         return None
 
 
+def plot_cost_vs_quality(results: Dict, category: str) -> str:
+    """Plot one point per strategy (cost vs quality) and save it to PNG.
+
+    Cost spans orders of magnitude (~$0.0001 for minimal up to ~$0.006 for
+    premium), so the x-axis is log-scaled; otherwise the cheap strategies hug
+    the bottom line and the trade-off is invisible. Returns the saved filename.
+    """
+    sns.set_theme(style="whitegrid")
+    strategies = [r["strategy_type"] for r in results.values()]
+    quality = [r["quality_score"] for r in results.values()]
+    cost = [r["total_cost"] for r in results.values()]
+
+    plt.figure(figsize=(9,5))
+    plt.scatter(cost, quality, s=160, alpha=0.8, color="#1f77b4", zorder=3)
+    for st, q, c in zip(strategies, quality, cost):
+        plt.annotate(st, (c, q), textcoords="offset points", xytext=(10, 6), fontsize=9, ha="left")
+
+    plt.xscale("log")
+    plt.ylim(0.5, 5.5)
+    plt.xlabel("Total cost (USD, log scale)")
+    plt.ylabel("Quality score (/5)")
+    plt.title(f"Cost vs Quality trade-off - {category}")
+    plt.grid(True, which="both", ls="--", alpha=0.4)
+    plt.tight_layout()
+
+    filename = f"cost_vs_quality_{category}.png"
+    plt.savefig(filename, dpi=120)
+    plt.close()
+    print(f"💾 Saved visualization: {filename}")
+    return filename
+
+
 def compare_prompt_strategies(category: str):
     """
     Compare all prompt strategies for a given category and analyze trade-offs.
@@ -690,6 +722,9 @@ def compare_prompt_strategies(category: str):
         # TODO: Find and display lowest cost
         lowest_c = min(results.values(), key=lambda r: r['total_cost'])
         print(f"    Lowest cost             : { lowest_c['strategy_type'] }")
+
+        # TODO: Visualize the cost vs quality trade-off
+        plot_cost_vs_quality(results, category)        
         
         return results
     else:
@@ -733,7 +768,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Add your own API key and test the complete workflow
 
 BONUS CHALLENGES:
-□ Add visualization of cost vs quality trade-offs using matplotlib
+✅ Add visualization of cost vs quality trade-offs using matplotlib
 □ Implement batch testing with multiple runs for statistical analysis
 □ Add confidence intervals for quality scores
 □ Create a budget optimization function that recommends strategies based on cost constraints
