@@ -289,7 +289,11 @@ def call_openai_api(prompt: str, config: Dict) -> Dict:
 
 # --- Heuristic tuning knobs (weights per category sum to 1.0) ---
 TASK_MIN_WORDS, TASK_MAX_WORDS = 25, 200
-CREATIVE_MIN_WORDS, CREATIVE_MAX_WORDS = 150, 400
+CREATIVE_MIN_WORDS, CREATIVE_MAX_WORDS = 200, 300  # the creative prompts ask for 200-300 words
+# Counts at which a feature earns full credit (more markers than this adds nothing)
+STRUCTURE_TARGET = 6    # bullets / numbered items / "first, second, finally" markers
+DIALOGUE_TARGET = 3     # quoted lines
+PARAGRAPH_TARGET = 3    # blank-line paragraph breaks
 PROBLEM_MIN_WORDS, PROBLEM_FULL_WORDS = 100, 200
 # Observed cosine(summary, source) with text-embedding-3-small spans ~0.55 (truncated) to ~0.87 (full);
 # rescale that band to 0..1 so good summaries can actually reach the top of the scale
@@ -347,26 +351,27 @@ def _heuristic_signal(response, category, source=None) -> float:
     words = re.findall(r"\w+", response.lower())
     n = len(words)
     distinct = _lexical_variety(words) # lexical variety
-    has_structure = bool(_STRUCTURE_RE.search(response))
-    has_dialogue = bool(_DIALOGUE_RE.search(response))
-    has_paragraphs = "\n\n" in response.strip()
+    # graded 0..1: how much of each feature is present, not just whether it is
+    structure = _ramp_up(len(_STRUCTURE_RE.findall(response)), STRUCTURE_TARGET)
+    dialogue = _ramp_up(len(_DIALOGUE_RE.findall(response)) // 2, DIALOGUE_TARGET) # 2 quote marks = 1 line
+    paragraphs = _ramp_up(response.strip().count("\n\n"), PARAGRAPH_TARGET)
 
     w = HEURISTIC_WEIGHTS.get(category)
     if category == CATEGORY_TASK_COMPLETION:
         score = (w["min_len"] * _ramp_up(n, TASK_MIN_WORDS)
                  + w["max_len"] * _ramp_down(n, TASK_MAX_WORDS)
                  + w["distinct"] * distinct
-                 + w["structure"] * has_structure)
+                 + w["structure"] * structure)
         if source:
             score = (1 - GROUNDING_WEIGHT) * score + GROUNDING_WEIGHT * _source_grounding(words, source)
     elif category == CATEGORY_CREATIVE_WRITING:
         score = (w["length"] * _ramp_up(n, CREATIVE_MIN_WORDS) * _ramp_down(n, CREATIVE_MAX_WORDS)
-                 + w["dialogue"] * has_dialogue
+                 + w["dialogue"] * dialogue
                  + w["distinct"] * distinct
-                 + w["paragraphs"] * has_paragraphs)
+                 + w["paragraphs"] * paragraphs)
     elif category == CATEGORY_PROBLEM_SOLVING:
         score = (w["min_len"] * _ramp_up(n, PROBLEM_MIN_WORDS)
-                 + w["structure"] * has_structure
+                 + w["structure"] * structure
                  + w["distinct"] * distinct
                  + w["full_len"] * _ramp_up(n, PROBLEM_FULL_WORDS))
     else:
