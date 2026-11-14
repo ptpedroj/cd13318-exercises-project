@@ -632,7 +632,9 @@ def compare_prompt_strategies(category: str):
     for strategy_type in strategy_types:
         # TODO: Call test_prompt_strategy and store results
         # Add small delay between calls to avoid rate limiting
-        pass
+        res = test_prompt_strategy(category, strategy_type)
+        if res:
+            results[strategy_type] = res
     
     # TODO: Analyze and display comparison
     if len(results) > 1:
@@ -641,13 +643,27 @@ def compare_prompt_strategies(category: str):
         
         # TODO: Create comparison table using pandas
         # Include: Strategy, Quality, Cost, Tokens, Cost-Effectiveness, Model
+        columns = ["strategy_type", "quality_score", "total_cost", "tokens_used", "cost_effectiveness", "model"]
+        table = pd.DataFrame(
+            [{k: results[st].get(k) for k in columns} for st in strategy_types if st in results],
+            columns=columns
+        )
+        print(table.to_string(index=False))
         
         # TODO: Provide recommendations
         print(f"\n💡 RECOMMENDATIONS:")
         
         # TODO: Find and display best cost-effectiveness
+        best_ce = max(results.values(), key=lambda r: r['cost_effectiveness'])
+        print(f"    Best cost-effectiveness : {best_ce['strategy_type']}")
+
         # TODO: Find and display highest quality
+        best_q = max(results.values(), key=lambda r: r['quality_score'])
+        print(f"    Highest quality         : {best_q['strategy_type']}")
+
         # TODO: Find and display lowest cost
+        lowest_c = min(results.values, key=lambda r: r['total_cost'])
+        print(f"    Lowest cost             : { lowest_c['strategy_type'] }")
         
         return results
     else:
@@ -658,13 +674,13 @@ def compare_prompt_strategies(category: str):
 def main():
     # TODO: Example usage - uncomment and test when ready
     # Test a single strategy
-    minimal_summary = test_prompt_strategy(CATEGORY_TASK_COMPLETION, CONFIG_MINIMAL)
+    # minimal_summary = test_prompt_strategy(CATEGORY_TASK_COMPLETION, CONFIG_MINIMAL)
 
     # TODO: Additional test examples you can run:
     # Compare all strategies for a category
-    # task_completion_results = compare_prompt_strategies("task_completion")
-    # creative_writing_results = compare_prompt_strategies("creative_writing")
-    # problem_solving_results = compare_prompt_strategies("problem_solving")
+    task_completion_results = compare_prompt_strategies("task_completion")
+    creative_writing_results = compare_prompt_strategies("creative_writing")
+    problem_solving_results = compare_prompt_strategies("problem_solving")
 
     # Single strategy tests:
     # standard_story = test_prompt_strategy("creative_writing", "standard")
@@ -687,8 +703,8 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Implement calculate_cost_effectiveness() function
 ✅ Complete test_prompt_strategy() function
 □ Implement compare_prompt_strategies() function
-□ Test your implementation with the example usage
-□ Add your own API key and test the complete workflow
+✅ Test your implementation with the example usage
+✅ Add your own API key and test the complete workflow
 
 BONUS CHALLENGES:
 □ Add visualization of cost vs quality trade-offs using matplotlib
