@@ -93,7 +93,7 @@ PROMPT_CONFIGS = {
     CONFIG_PREMIUM: {
         "parameters": {
             # TODO: Choose high-performance model
-            "model": "gpt-4.1",
+            "model": "gpt-4.1", # replaced gpt-4-turbo since it is no longer available (deprecated)
             # TODO: Set temperature for consistency (hint: lower for more consistent)
             "temperature": 0.5,
             # TODO: Set higher max_completion_tokens for detailed responses
@@ -119,7 +119,7 @@ MODEL_PRICING = {
         # TODO: Add output token price
         "output": 10. / 1_000_000
     },
-    "gpt-4.1": {
+    "gpt-4.1": { # replaced gpt-4-turbo since it is no longer available (deprecated)
         # TODO: Add input token price
         "input": 2. / 1_000_000,
         # TODO: Add output token price
