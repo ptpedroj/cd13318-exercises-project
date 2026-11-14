@@ -298,6 +298,7 @@ MIN_CONTENT_WORD_LEN = 3      # words must be longer than this to count as "cont
 TARGET_SOURCE_COVERAGE = 0.25 # a good summary should reuse ~25% of the source's key terms
 GROUNDING_WEIGHT = 0.5        # share of the task score given to source grounding
 DEFAULT_HEURISTIC = 0.5       # score for unknown categories
+DISTINCT_WINDOW = 50          # words per window for length-independent lexical variety
 
 HEURISTIC_WEIGHTS = {
     CATEGORY_TASK_COMPLETION:  {"min_len": 0.1, "max_len": 0.2, "distinct": 0.3, "structure": 0.4},
@@ -319,6 +320,16 @@ def _ramp_down(n, limit):
     return 1.0 if n <= limit else limit / n
 
 
+def _lexical_variety(words, window=DISTINCT_WINDOW) -> float:
+    """Moving-average type-token ratio: unique/total averaged over sliding windows.
+    Plain unique/total shrinks as text grows, which penalises longer responses."""
+    n = len(words)
+    if n <= window:
+        return len(set(words)) / max(n, 1)
+    ratios = [len(set(words[i:i + window])) / window for i in range(n - window + 1)]
+    return sum(ratios) / len(ratios)
+
+
 def _source_grounding(words, source) -> float:
     """Blend of precision (response stays on source) and capped coverage (response captures source)."""
     content = lambda toks: {w for w in toks if len(w) > MIN_CONTENT_WORD_LEN}
@@ -335,7 +346,7 @@ def _source_grounding(words, source) -> float:
 def _heuristic_signal(response, category, source=None) -> float:
     words = re.findall(r"\w+", response.lower())
     n = len(words)
-    distinct = len(set(words)) / max(n, 1) # lexical variety
+    distinct = _lexical_variety(words) # lexical variety
     has_structure = bool(_STRUCTURE_RE.search(response))
     has_dialogue = bool(_DIALOGUE_RE.search(response))
     has_paragraphs = "\n\n" in response.strip()
