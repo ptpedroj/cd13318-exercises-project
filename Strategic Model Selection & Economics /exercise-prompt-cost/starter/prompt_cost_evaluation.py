@@ -298,6 +298,9 @@ PROBLEM_MIN_WORDS, PROBLEM_FULL_WORDS = 100, 200
 # Observed cosine(summary, source) with text-embedding-3-small spans ~0.55 (truncated) to ~0.87 (full);
 # rescale that band to 0..1 so good summaries can actually reach the top of the scale
 COSINE_LOW, COSINE_HIGH = 0.55, 0.90
+# Blended scores observed in practice span ~0.2 (cut-off answers) to ~0.85 (good answers), so a
+# plain 0..1 -> 1..5 mapping never reaches 5; stretch that band over the full scale
+BLEND_LOW, BLEND_HIGH = 0.2, 0.85
 MIN_CONTENT_WORD_LEN = 3      # words must be longer than this to count as "content" words
 TARGET_SOURCE_COVERAGE = 0.25 # a good summary should reuse ~25% of the source's key terms
 GROUNDING_WEIGHT = 0.5        # share of the task score given to source grounding
@@ -407,6 +410,12 @@ def _heuristic_signal(response, category, source=None, prompt=None) -> float:
     return max(0.0, min(1.0, score))
 
 
+def _to_scale(blended: float) -> int:
+    """Stretch the BLEND_LOW..BLEND_HIGH band over 0..1, then map to the 1-5 scale."""
+    stretched = max(0.0, min(1.0, (blended - BLEND_LOW) / (BLEND_HIGH - BLEND_LOW)))
+    return 1 + round(stretched * 4)
+
+
 # per-category weight on EMBEDDINGS (meaning); heuristics get (1 - alpha)
 ALPHA = {
     CATEGORY_TASK_COMPLETION:  0.55,   # correctness of content matters most
@@ -468,14 +477,14 @@ def score_response_quality(response: str, category: str, source: Optional[str] =
     heuristic = _heuristic_signal(response, category, source, prompt)
     if not source:
         # Nothing to compare against: skip the embedding call and rely on heuristics alone
-        return 1 + round(heuristic * 4) # 0..1 -> 1..5
+        return _to_scale(heuristic)
 
     resp_emb, src_emb = embed([response, source])
     similarity = cosine(resp_emb, src_emb)
     embedding = max(0.0, min(1.0, (similarity - COSINE_LOW) / (COSINE_HIGH - COSINE_LOW))) # rescale + clip to 0..1
     alpha = ALPHA.get(category, 0.4)
     blended = (1 - alpha) * heuristic + alpha * embedding
-    return 1 + round(blended * 4) # 0..1 -> 1..5
+    return _to_scale(blended)
         
  
 def calculate_cost_effectiveness(quality_score: int, total_cost: float) -> float:
