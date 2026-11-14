@@ -433,3 +433,6 @@ response_cache/
 scratch.ipynb
 test.ipynb
 debug.ipynb
+
+# Generated cost-vs-quality charts
+**/outputs/cost_vs_quality_*.png

@@ -16,6 +16,7 @@ import seaborn as sns
 from datetime import datetime
 import numpy as np
 import re
+from pathlib import Path
 
 try:
     from dotenv import load_dotenv
@@ -57,6 +58,8 @@ def cosine(a, b) -> float:
     denominator = np.linalg.norm(a) * np.linalg.norm(b)
     return float(np.dot(a, b) / denominator) if denominator else 0.
 
+
+PLOT_OUTPUT_DIR = Path(__file__).parent / "outputs" # charts land next to the script, not in the cwd
 
 CONFIG_MINIMAL = "minimal"
 CONFIG_STANDARD = "standard"
@@ -633,35 +636,42 @@ def test_prompt_strategy(category: str, strategy_type: str) -> Optional[Dict]:
 
 
 def plot_cost_vs_quality(results: Dict, category: str) -> str:
-    """Plot one point per strategy (cost vs quality) and save it to PNG.
+    """Plot one point per strategy (cost vs quality) and save it as a PNG in outputs/.
 
-    Cost spans orders of magnitude (~$0.0001 for minimal up to ~$0.006 for
-    premium), so the x-axis is log-scaled; otherwise the cheap strategies hug
-    the bottom line and the trade-off is invisible. Returns the saved filename.
+    Model tiers differ in cost by orders of magnitude, so the x-axis is log-scaled; otherwise the
+    cheap strategies hug one edge and the trade-off is invisible. Marker area scales with
+    cost-effectiveness (quality points per dollar), so the chart shows the same ranking the
+    comparison table prints. Strategies are told apart by colour and legend, not text labels,
+    which collide when two strategies cost about the same. Returns the saved file path.
     """
-    sns.set_theme(style="whitegrid")
-    strategies = [r["strategy_type"] for r in results.values()]
-    quality = [r["quality_score"] for r in results.values()]
-    cost = [r["total_cost"] for r in results.values()]
+    strategies = list(results.values())
+    top = max(r["cost_effectiveness"] for r in strategies) or 1 # avoid dividing by 0
+    palette = sns.color_palette("deep", len(strategies))
 
-    plt.figure(figsize=(9,5))
-    plt.scatter(cost, quality, s=160, alpha=0.8, color="#1f77b4", zorder=3)
-    for st, q, c in zip(strategies, quality, cost):
-        plt.annotate(st, (c, q), textcoords="offset points", xytext=(10, 6), fontsize=9, ha="left")
+    with sns.axes_style("whitegrid"): # scoped: leaves matplotlib's global style untouched
+        fig, ax = plt.subplots(figsize=(9, 5))
+        for r, color in zip(strategies, palette):
+            ax.scatter(r["total_cost"], r["quality_score"],
+                       s=100 + 500 * r["cost_effectiveness"] / top, # area ~ cost-effectiveness
+                       color=color, alpha=0.8, zorder=3,
+                       label=f"{r['strategy_type']} (cost-effectiveness {r['cost_effectiveness']:,.0f})")
 
-    plt.xscale("log")
-    plt.ylim(0.5, 5.5)
-    plt.xlabel("Total cost (USD, log scale)")
-    plt.ylabel("Quality score (/5)")
-    plt.title(f"Cost vs Quality trade-off - {category}")
-    plt.grid(True, which="both", ls="--", alpha=0.4)
-    plt.tight_layout()
+        ax.set_xscale("log")
+        ax.margins(x=0.3) # keep markers off the axis edges
+        ax.set_ylim(0.5, 5.5)
+        ax.set_yticks(range(1, 6))
+        ax.set_xlabel("Total cost (USD, log scale)")
+        ax.set_ylabel("Quality score (/5)")
+        ax.set_title(f"Cost vs Quality trade-off - {category.replace('_', ' ').title()}")
+        ax.legend(title="Strategy (marker size = cost-effectiveness)", loc="best")
+        fig.tight_layout()
 
-    filename = f"cost_vs_quality_{category}.png"
-    plt.savefig(filename, dpi=120)
-    plt.close()
-    print(f"💾 Saved visualization: {filename}")
-    return filename
+    PLOT_OUTPUT_DIR.mkdir(exist_ok=True)
+    path = PLOT_OUTPUT_DIR / f"cost_vs_quality_{category}.png"
+    fig.savefig(path, dpi=120)
+    plt.close(fig)
+    print(f"💾 Saved visualization: {path}")
+    return str(path)
 
 
 def compare_prompt_strategies(category: str):
