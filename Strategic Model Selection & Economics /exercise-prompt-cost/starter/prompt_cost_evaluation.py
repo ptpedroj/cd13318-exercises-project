@@ -662,7 +662,7 @@ def compare_prompt_strategies(category: str):
         print(f"    Highest quality         : {best_q['strategy_type']}")
 
         # TODO: Find and display lowest cost
-        lowest_c = min(results.values, key=lambda r: r['total_cost'])
+        lowest_c = min(results.values(), key=lambda r: r['total_cost'])
         print(f"    Lowest cost             : { lowest_c['strategy_type'] }")
         
         return results
@@ -702,7 +702,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Complete score_response_quality() with category-specific logic
 ✅ Implement calculate_cost_effectiveness() function
 ✅ Complete test_prompt_strategy() function
-□ Implement compare_prompt_strategies() function
+✅ Implement compare_prompt_strategies() function
 ✅ Test your implementation with the example usage
 ✅ Add your own API key and test the complete workflow
 
