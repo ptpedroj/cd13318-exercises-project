@@ -47,23 +47,23 @@ EMBEDDING_CONFIGS = {
 COLLECTION_CONFIGS = {
     "tech_docs": {
         # TODO: Set collection name
-        "name": "",
+        "name": "technical_documentation",
         # TODO: Define metadata fields for technical documentation
-        "metadata_fields": [],
+        "metadata_fields": ["source", "category", "difficulty", "last_updated"],
         "description": "Technical documentation with structured metadata"
     },
     "faq_support": {
         # TODO: Set collection name
-        "name": "",
+        "name": "faq_customer_support",
         # TODO: Define metadata fields for FAQ support
-        "metadata_fields": [],
+        "metadata_fields": ["category", "priority", "department", "tags"],
         "description": "FAQ database for customer support automation"
     },
     "knowledge_base": {
         # TODO: Set collection name
-        "name": "",
+        "name": "general_knowledge",
         # TODO: Define metadata fields for general knowledge
-        "metadata_fields": [],
+        "metadata_fields": ["topic", "source", "confidence", "date_added"],
         "description": "General knowledge base for information retrieval"
     }
 }
@@ -399,7 +399,7 @@ def demonstrate_chromadb_rag():
 EXERCISE COMPLETION CHECKLIST:
 ✅ Import all necessary libraries
 ✅ Complete EMBEDDING_CONFIGS with appropriate models and parameters
-□ Fill in COLLECTION_CONFIGS with meaningful names and metadata fields
+✅ Fill in COLLECTION_CONFIGS with meaningful names and metadata fields
 □ Create comprehensive SAMPLE_DOCUMENTS with realistic content
 □ Implement ChromaDBRAGSystem.__init__() with proper initialization
 □ Complete create_collection() with ChromaDB collection creation
