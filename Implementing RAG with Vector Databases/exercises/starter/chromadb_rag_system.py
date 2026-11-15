@@ -24,20 +24,20 @@ from pathlib import Path
 EMBEDDING_CONFIGS = {
     "openai_embeddings": {
         # TODO: Set provider to "openai"
-        "provider": "",
+        "provider": "openai",
         # TODO: Choose OpenAI embedding model (hint: text-embedding-3-small is cost-effective)
-        "model": "",
+        "model": "text-embedding-3-small",
         # TODO: Set dimensions (hint: 1536 for text-embedding-3-small)
-        "dimensions": 0,
+        "dimensions": 1536,
         "description": "OpenAI embeddings with excellent semantic understanding"
     },
     "local_embeddings": {
         # TODO: Set provider to "sentence_transformers"
-        "provider": "",
+        "provider": "sentence_transformers",
         # TODO: Choose local model (hint: all-MiniLM-L6-v2 is lightweight)
-        "model": "",
+        "model": "all-MiniLM-L6-v2",
         # TODO: Set dimensions (hint: 384 for all-MiniLM-L6-v2)
-        "dimensions": 0,
+        "dimensions": 384,
         "description": "Local embeddings for cost-effective processing"
     }
 }
@@ -398,7 +398,7 @@ def demonstrate_chromadb_rag():
 """
 EXERCISE COMPLETION CHECKLIST:
 ✅ Import all necessary libraries
-□ Complete EMBEDDING_CONFIGS with appropriate models and parameters
+✅ Complete EMBEDDING_CONFIGS with appropriate models and parameters
 □ Fill in COLLECTION_CONFIGS with meaningful names and metadata fields
 □ Create comprehensive SAMPLE_DOCUMENTS with realistic content
 □ Implement ChromaDBRAGSystem.__init__() with proper initialization
