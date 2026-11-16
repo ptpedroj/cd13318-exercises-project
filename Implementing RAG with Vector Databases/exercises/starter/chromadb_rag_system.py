@@ -232,7 +232,7 @@ class ChromaDBRAGSystem:
         print(f"   Collections Ready: {len(self.collections)} (create collections to start)")
 
 
-    def create_collection(self, collection_key: str):
+    def create_collection(self, collection_key: str) -> chromadb.Collection:
         """
         Create a new ChromaDB collection with specified configuration.
         
@@ -262,14 +262,29 @@ class ChromaDBRAGSystem:
         
         try:
             # TODO: Delete existing collection if it exists
+            try:
+                self.client.delete_collection(collection_name)
+                print(f"   ♻️  Deleted existing collection")
+            except Exception:
+                pass  # Collection does not exist yet — safe to ignore
+
             # TODO: Create new collection
+            collection = self.client.create_collection(
+                name=collection_name,
+                embedding_function=None,  # We'll handle embeddings manually
+                metadata={"description": config["description"]}
+            )
             # TODO: Store in self.collections
+            self.collections[collection_key] = collection
             # TODO: Print success message
-            pass
-            
+            print(f"   ✅ Collection '{collection_name}' created successfully")
+
+            return collection # returning due to docstring spec
+                                 
         except Exception as e:
             print(f"   ❌ Error creating collection: {str(e)}")
             raise
+
 
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
