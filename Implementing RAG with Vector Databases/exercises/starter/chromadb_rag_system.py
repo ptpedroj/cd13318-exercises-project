@@ -472,7 +472,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Fill in COLLECTION_CONFIGS with meaningful names and metadata fields
 ✅ Create comprehensive SAMPLE_DOCUMENTS with realistic content
 ✅ Implement ChromaDBRAGSystem.__init__() with proper initialization
-□ Complete create_collection() with ChromaDB collection creation
+✅ Complete create_collection() with ChromaDB collection creation
 □ Implement generate_embeddings() with OpenAI API integration
 □ Complete add_documents() with embedding generation and storage
 □ Implement search_documents() with similarity search and filtering
@@ -480,7 +480,7 @@ EXERCISE COMPLETION CHECKLIST:
 □ Implement display_rag_response() with formatted output
 □ Complete demonstrate_chromadb_rag() with comprehensive testing
 □ Test your implementation with the example usage
-□ Add your own API key and test the complete workflow
+✅ Add your own API key and test the complete workflow
 
 BONUS CHALLENGES:
 □ Add support for local embedding models using sentence-transformers
