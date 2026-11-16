@@ -19,6 +19,34 @@ import os
 from pathlib import Path
 
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv is optional; we can still read a pre-set env var.
+    load_dotenv = None
+
+
+# Read the key from the environment at runtime (never commit real keys).
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+
+
+_client: Optional[OpenAI] = None
+
+
+def get_client(api_key=OPENAI_API_KEY) -> OpenAI:
+    """Create the OpenAI client once and reuse it for every call."""
+    global _client
+    if _client is None:
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY is not set")
+        _client = OpenAI(
+            api_key=api_key,
+            base_url="https://openai.vocareum.com/v1" if api_key.startswith("voc") else None
+        )
+    return _client
+
+
 # TODO: Define embedding configurations for different strategies
 # Create configurations for OpenAI embeddings and local alternatives
 EMBEDDING_CONFIGS = {
@@ -176,22 +204,33 @@ class ChromaDBRAGSystem:
             persist_directory (str): Directory for persistent storage
         """
         # TODO: Store embedding configuration
-        self.embedding_config = None
+        self.embedding_config = EMBEDDING_CONFIGS.get(embedding_config)
         self.persist_directory = persist_directory
         
         # TODO: Initialize ChromaDB client with persistent storage
         # Hint: Use chromadb.PersistentClient with path and settings
-        self.client = None
+        self.client = chromadb.PersistentClient(
+            path=self.persist_directory, 
+            settings=Settings(
+                anonymized_telemetry=False,  # Disable telemetry for privacy
+                allow_reset=True  # Allow resetting collections for development
+            )
+        )
         
         # TODO: Initialize OpenAI client for embeddings and generation
         # SECURITY NOTE: Use environment variables for API keys in production
-        self.openai_client = None
-        
+        self.openai_client = get_client()
+
         # TODO: Initialize collections dictionary
         self.collections = {}
         
         # TODO: Print initialization status
         print(f"🚀 ChromaDB RAG System initialized")
+        print(f"   Embedding Config: {self.embedding_config['description']}")
+        print(f"   Persistent Storage Directory: {self.persist_directory}")
+        print(f"   OpenAI Client Initialized: {'Yes' if self.openai_client else 'No'}")
+        print(f"   Collections Ready: {len(self.collections)} (create collections to start)")
+
 
     def create_collection(self, collection_key: str):
         """
@@ -417,7 +456,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Complete EMBEDDING_CONFIGS with appropriate models and parameters
 ✅ Fill in COLLECTION_CONFIGS with meaningful names and metadata fields
 ✅ Create comprehensive SAMPLE_DOCUMENTS with realistic content
-□ Implement ChromaDBRAGSystem.__init__() with proper initialization
+✅ Implement ChromaDBRAGSystem.__init__() with proper initialization
 □ Complete create_collection() with ChromaDB collection creation
 □ Implement generate_embeddings() with OpenAI API integration
 □ Complete add_documents() with embedding generation and storage
