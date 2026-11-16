@@ -75,29 +75,37 @@ SAMPLE_DOCUMENTS = {
         {
             "id": "tech_001",
             # TODO: Add content about ChromaDB (200-300 words)
-            "content": "",
+            "content": "ChromaDB is an open-source vector database built specifically for artificial intelligence and machine learning applications. It provides a simple, developer-friendly way to store, search, and manage high-dimensional vector embeddings, which are the numerical representations of text, images, and audio that power modern AI pipelines. ChromaDB is designed to be lightweight and easy to integrate, making it a popular choice for startups and enterprises that need semantic search, recommendation systems, and retrieval-augmented generation (RAG) without the complexity of traditional database infrastructure. One of ChromaDB's key strengths is its flexibility. It supports multiple embedding functions, letting developers plug in models from OpenAI, sentence-transformers, or their own custom models. It also offers both in-memory storage for quick prototyping and persistent storage for production, where data survives across restarts. ChromaDB natively supports metadata filtering, so users can combine semantic similarity search with structured filters like date ranges, categories, or user IDs. It runs either as an embedded library inside a process or as a standalone server through its Python and HTTP APIs. Its design follows a simple 'three calls' principle (add, update, query) that keeps vector database operations intuitive. Because it stores vectors for fast approximate nearest neighbor (ANN) search, ChromaDB can retrieve the most semantically relevant documents in milliseconds, even among millions of records, making it an ideal backbone for context-aware information retrieval.",
             "metadata": {
                 # TODO: Add appropriate metadata
-                "source": "",
-                "category": "",
-                "difficulty": "",
-                "last_updated": ""
+                "source": "ChromaDB Documentation",
+                "category": "Database",
+                "difficulty": "Intermediate",
+                "last_updated": "2024-01-15"
             }
         },
         {
             "id": "tech_002",
             # TODO: Add content about RAG systems (200-300 words)
-            "content": "",
+            "content": "Retrieval-Augmented Generation (RAG) is an AI architecture that combines the knowledge-retrieval strength of traditional search systems with the generative power of large language models (LLMs). Instead of relying only on what is baked into a language model's parameters, a RAG system first retrieves relevant documents or data fragments from an external knowledge base, then feeds that context to the model to produce a grounded, accurate answer. The RAG workflow typically follows four steps. First, a query is converted into a vector embedding using an embedding model. Second, the system runs a similarity search against a vector database to find the most relevant source documents. Third, those documents are formatted into a prompt alongside the original question. Fourth, a large language model generates a response using both the retrieved context and its own training. RAG offers several key advantages. It reduces hallucinations by anchoring responses in real, verifiable sources. It keeps answers current by pulling from up-to-date data without requiring expensive model retraining. It also improves transparency because responses can cite their sources. Common use cases include customer support chatbots, internal enterprise knowledge search, question-answering over documentation, and research assistance. The main engineering challenges are retrieval quality, context-window management, latency, and convincing the model to trust accurate context over misleading priors. When implemented well, RAG turns a generic chatbot into a domain-specific assistant that answers questions with precision and citations.",
             "metadata": {
                 # TODO: Add appropriate metadata
+                "source": "AI Research Papers",
+                "category": "AI",
+                "difficulty": "Advanced",
+                "last_updated": "2024-02-01"
             }
         },
         {
             "id": "tech_003",
             # TODO: Add content about vector embeddings (200-300 words)
-            "content": "",
+            "content": "Vector embeddings are numerical representations of data - such as text, images, or audio - that capture their semantic meaning in a high-dimensional space. In an embedding, each dimension represents a latent feature of the data, and items with similar meaning sit close together. For example, the embeddings of the words 'king' and 'queen' are much closer than those of 'king' and 'banana', even though both pairs share no literal letters. The process begins by feeding text through an embedding model such as OpenAI's text-embedding-3-small. That neural network maps each piece of text to a fixed-length vector, typically 1536 or 384 numbers long. Similarity between embeddings is commonly measured using cosine similarity or Euclidean (L2) distance: a high cosine similarity means the texts convey related concepts, while a low score means they are unrelated. Embeddings enable capabilities that plain keyword matching cannot achieve. Because they encode meaning rather than exact words, a query like 'my internet is down' can still match a document titled 'How to Troubleshoot Connectivity Issues', even when the words do not overlap. This semantic understanding underpins modern search, deduplication, clustering, and recommendation systems. A critical rule is model consistency: every vector in a single collection must be produced by the same model, because vectors from different models live in incompatible spaces and cannot be compared. Batch-embedding many documents at once also improves efficiency, letting systems process large corpora quickly and cost-effectively.",
             "metadata": {
                 # TODO: Add appropriate metadata
+                "source": "Embedding Guide",
+                "category": "AI",
+                "difficulty": "Intermediate",
+                "last_updated": "2024-01-20"
             }
         }
     ],
@@ -105,29 +113,37 @@ SAMPLE_DOCUMENTS = {
         {
             "id": "faq_001",
             # TODO: Add FAQ about password reset
-            "content": "",
+            "content": "Q: How do I reset my password? A: To reset your password, follow these simple steps. First, go to the login page and click the 'Forgot Password?' link located just below the password field. Next, enter the email address associated with your account and submit the form. You will receive a secure reset link in your inbox - be sure to check your Spam folder if it does not arrive within a few minutes. Click the link, then create a new password that is at least 12 characters long and combines letters, numbers, and symbols. Once you save your new password, you can log in with it. For security, the reset link expires after 24 hours. If you continue to have trouble logging in, or if you no longer have access to your registered email, please contact our IT Support team through the internal help desk, and we will verify your identity and assist you further.",
             "metadata": {
                 # TODO: Add appropriate metadata for customer support
-                "category": "",
-                "priority": "",
-                "department": "",
-                "tags": []
+                "category": "Account Management",
+                "priority": "High",
+                "department": "IT Support",
+                "tags": "password, security, login"
             }
         },
         {
             "id": "faq_002",
             # TODO: Add FAQ about business hours
-            "content": "",
+            "content": "Q: What are your business hours? A: Our customer support team is available Monday through Friday from 9 AM to 6 PM EST. During these hours you can reach us by phone, email, or live chat and expect a response within one business day for email inquiries. For urgent technical issues outside regular hours, we offer an emergency support line available 24/7, included at no extra cost with premium subscriptions. Standard plan customers can access the emergency line during business hours and will be routed to the on-call engineer for critical, service-down incidents. We also recommend our self-service knowledge base, which is available around the clock and contains step-by-step guides that often resolve common questions instantly. Support response times may be longer on public holidays, so planning ahead is advised.",
             "metadata": {
                 # TODO: Add appropriate metadata
+                "category": "General Information",
+                "priority": "Medium",
+                "department": "Customer Service",
+                "tags": "hours, support, availability"
             }
         },
         {
             "id": "faq_003",
             # TODO: Add FAQ about subscription upgrade
-            "content": "",
+            "content": "Q: How do I upgrade my subscription? A: Upgrading your subscription is quick and easy. Log into your account and navigate to the 'Billing' or 'Plan' section, usually found in account settings or the dashboard menu. From there, browse the available plans and select the tier that best fits your needs. Click 'Upgrade Plan', review the new pricing, and confirm your selection. Your new plan takes effect immediately, and you will be prorated for the remainder of your current billing period, meaning you only pay the difference for the time left in this cycle. Any new features or higher limits are unlocked right away. If you were on an annual plan, the remaining balance is typically credited toward the new total. You will receive a confirmation email and an updated invoice. If you run into any issues during the upgrade process, please contact our Sales team for hands-on assistance.",
             "metadata": {
                 # TODO: Add appropriate metadata
+                "category": "Billing",
+                "priority": "High",
+                "department": "Sales",
+                "tags": "subscription, billing, upgrade"
             }
         }
     ]
@@ -400,7 +416,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Import all necessary libraries
 ✅ Complete EMBEDDING_CONFIGS with appropriate models and parameters
 ✅ Fill in COLLECTION_CONFIGS with meaningful names and metadata fields
-□ Create comprehensive SAMPLE_DOCUMENTS with realistic content
+✅ Create comprehensive SAMPLE_DOCUMENTS with realistic content
 □ Implement ChromaDBRAGSystem.__init__() with proper initialization
 □ Complete create_collection() with ChromaDB collection creation
 □ Implement generate_embeddings() with OpenAI API integration
