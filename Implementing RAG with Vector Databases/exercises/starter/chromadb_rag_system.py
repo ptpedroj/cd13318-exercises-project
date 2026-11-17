@@ -47,10 +47,14 @@ def get_client(api_key=OPENAI_API_KEY) -> OpenAI:
     return _client
 
 
+EMBEDDINGS_LOCAL = "local_embeddings"
+EMBEDDINGS_OPENAI = "openai_embeddings"
+
+
 # TODO: Define embedding configurations for different strategies
 # Create configurations for OpenAI embeddings and local alternatives
 EMBEDDING_CONFIGS = {
-    "openai_embeddings": {
+    EMBEDDINGS_OPENAI: {
         # TODO: Set provider to "openai"
         "provider": "openai",
         # TODO: Choose OpenAI embedding model (hint: text-embedding-3-small is cost-effective)
@@ -59,7 +63,7 @@ EMBEDDING_CONFIGS = {
         "dimensions": 1536,
         "description": "OpenAI embeddings with excellent semantic understanding"
     },
-    "local_embeddings": {
+    EMBEDDINGS_LOCAL: {
         # TODO: Set provider to "sentence_transformers"
         "provider": "sentence_transformers",
         # TODO: Choose local model (hint: all-MiniLM-L6-v2 is lightweight)
@@ -223,6 +227,7 @@ class ChromaDBRAGSystem:
         # TODO: Initialize OpenAI client for embeddings and generation
         # SECURITY NOTE: Use environment variables for API keys in production
         self.openai_client = get_client()
+        self._local_embedding_model = None  # Placeholder for local embedding model if needed
 
         # TODO: Initialize collections dictionary
         self.collections = {}
@@ -321,8 +326,20 @@ class ChromaDBRAGSystem:
                 
             else:
                 # TODO: Handle local embeddings (optional)
-                print("⚠️  Local embeddings not implemented in this example")
-                return []
+                if self.embedding_config["provider"] == "sentence_transformers":
+                    if self._local_embedding_model is None:
+                        # Lazy load the local embedding model
+                        from sentence_transformers import SentenceTransformer
+                        self._local_embedding_model = SentenceTransformer(self.embedding_config["model"])
+                        print(f"   ⚡ Loaded local embedding model: {self.embedding_config['model']}")
+                    # Generate embeddings using the local model
+                    embeddings = self._local_embedding_model.encode(texts, convert_to_numpy=True).tolist()
+                    print(f"   ✅ Generated {len(embeddings)} local embeddings successfully")
+                    return embeddings
+
+                else:
+                    print("⚠️  Local embeddings not implemented in this example")
+                    return []
                 
         except Exception as e:
             print(f"❌ Error generating embeddings: {str(e)}")
@@ -589,7 +606,7 @@ class ChromaDBRAGSystem:
         print("=" * 80)
     
 
-def demonstrate_chromadb_rag():
+def demonstrate_chromadb_rag(embedding_config: str = EMBEDDINGS_OPENAI, persist_directory: str = "./demo_chroma_db") -> None:
     """
     Comprehensive demonstration of ChromaDB RAG system capabilities.
     
@@ -604,7 +621,7 @@ def demonstrate_chromadb_rag():
     print("="*60)
     
     # TODO: Initialize the RAG system
-    rag_system = ChromaDBRAGSystem(embedding_config="openai_embeddings", persist_directory="./demo_chroma_db")
+    rag_system = ChromaDBRAGSystem(embedding_config=embedding_config, persist_directory=persist_directory)
 
     # TODO: Create collections
     print("\n📁 Creating collections...")
@@ -660,7 +677,8 @@ def main():
     """
     # TODO: Example usage - uncomment and test when ready
     # Run the comprehensive demonstration
-    demonstrate_chromadb_rag()
+    #demonstrate_chromadb_rag()
+    demonstrate_chromadb_rag(embedding_config=EMBEDDINGS_LOCAL, persist_directory="./demo_chroma_db_local")
 
     # TODO: Additional examples you can implement:
     # 
@@ -703,7 +721,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Add your own API key and test the complete workflow
 
 BONUS CHALLENGES:
-□ Add support for local embedding models using sentence-transformers
+✅ Add support for local embedding models using sentence-transformers
 □ Implement batch processing for large document collections
 □ Add metadata-based filtering and advanced search capabilities
 □ Create a web interface for the RAG system using Flask or FastAPI
