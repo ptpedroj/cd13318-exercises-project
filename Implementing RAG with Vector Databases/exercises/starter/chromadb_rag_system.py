@@ -84,7 +84,7 @@ COLLECTION_CONFIGS = {
         # TODO: Set collection name
         "name": "faq_customer_support",
         # TODO: Define metadata fields for FAQ support
-        "metadata_fields": ["category", "priority", "department", "tags"],
+        "metadata_fields": ["category", "source", "priority", "department", "tags"],
         "description": "FAQ database for customer support automation"
     },
     "knowledge_base": {
@@ -144,6 +144,7 @@ SAMPLE_DOCUMENTS = {
             "content": "Q: How do I reset my password? A: To reset your password, follow these simple steps. First, go to the login page and click the 'Forgot Password?' link located just below the password field. Next, enter the email address associated with your account and submit the form. You will receive a secure reset link in your inbox - be sure to check your Spam folder if it does not arrive within a few minutes. Click the link, then create a new password that is at least 12 characters long and combines letters, numbers, and symbols. Once you save your new password, you can log in with it. For security, the reset link expires after 24 hours. If you continue to have trouble logging in, or if you no longer have access to your registered email, please contact our IT Support team through the internal help desk, and we will verify your identity and assist you further.",
             "metadata": {
                 # TODO: Add appropriate metadata for customer support
+                "source": "Customer Support FAQ",
                 "category": "Account Management",
                 "priority": "High",
                 "department": "IT Support",
@@ -156,6 +157,7 @@ SAMPLE_DOCUMENTS = {
             "content": "Q: What are your business hours? A: Our customer support team is available Monday through Friday from 9 AM to 6 PM EST. During these hours you can reach us by phone, email, or live chat and expect a response within one business day for email inquiries. For urgent technical issues outside regular hours, we offer an emergency support line available 24/7, included at no extra cost with premium subscriptions. Standard plan customers can access the emergency line during business hours and will be routed to the on-call engineer for critical, service-down incidents. We also recommend our self-service knowledge base, which is available around the clock and contains step-by-step guides that often resolve common questions instantly. Support response times may be longer on public holidays, so planning ahead is advised.",
             "metadata": {
                 # TODO: Add appropriate metadata
+                "source": "Customer Support FAQ",
                 "category": "General Information",
                 "priority": "Medium",
                 "department": "Customer Service",
@@ -168,6 +170,7 @@ SAMPLE_DOCUMENTS = {
             "content": "Q: How do I upgrade my subscription? A: Upgrading your subscription is quick and easy. Log into your account and navigate to the 'Billing' or 'Plan' section, usually found in account settings or the dashboard menu. From there, browse the available plans and select the tier that best fits your needs. Click 'Upgrade Plan', review the new pricing, and confirm your selection. Your new plan takes effect immediately, and you will be prorated for the remainder of your current billing period, meaning you only pay the difference for the time left in this cycle. Any new features or higher limits are unlocked right away. If you were on an annual plan, the remaining balance is typically credited toward the new total. You will receive a confirmation email and an updated invoice. If you run into any issues during the upgrade process, please contact our Sales team for hands-on assistance.",
             "metadata": {
                 # TODO: Add appropriate metadata
+                "source": "Sales & Billing FAQ",
                 "category": "Billing",
                 "priority": "High",
                 "department": "Sales",
@@ -431,7 +434,7 @@ class ChromaDBRAGSystem:
             results = collection.query(
                 query_embeddings=query_embedding,
                 n_results=n_results,
-                where=metadata_filter if metadata_filter else {},
+                where=metadata_filter or None,
                 include=["documents", "metadatas", "distances"]
             )
 
@@ -573,7 +576,7 @@ class ChromaDBRAGSystem:
         if context_docs:
             print(f"\n📚 Context Sources ({len(context_docs)}) documents:")
             for i, doc in enumerate(context_docs):
-                source = doc.get("source", "N/A")
+                source = doc.get("metadata", {}).get("source", "N/A")
                 print(f"   {i + 1}. Source: {source}")
                 print(f"      Preview: {doc['document'][:120]}...") # Show first 120 chars
         else:
@@ -651,27 +654,36 @@ def demonstrate_chromadb_rag():
     print(f"   Queries tested: {len(test_queries)}")
 
 
-# TODO: Example usage - uncomment and test when ready
-# Run the comprehensive demonstration
-# demonstrate_chromadb_rag()
+def main():
+    """
+    Main function to run the ChromaDB RAG system demonstration.
+    """
+    # TODO: Example usage - uncomment and test when ready
+    # Run the comprehensive demonstration
+    demonstrate_chromadb_rag()
 
-# TODO: Additional examples you can implement:
-# 
-# Example 1: Custom metadata filtering
-# rag_system = ChromaDBRAGSystem()
-# rag_system.create_collection("tech_docs")
-# rag_system.add_documents("tech_docs", SAMPLE_DOCUMENTS["tech_docs"])
-# filtered_results = rag_system.search_documents(
-#     "tech_docs", 
-#     "database information",
-#     metadata_filter={"category": "Database"}
-# )
-#
-# Example 2: Batch processing multiple queries
-# queries = ["What is RAG?", "How do embeddings work?", "ChromaDB features"]
-# for query in queries:
-#     response = rag_system.generate_rag_response("tech_docs", query)
-#     rag_system.display_rag_response(response)
+    # TODO: Additional examples you can implement:
+    # 
+    # Example 1: Custom metadata filtering
+    # rag_system = ChromaDBRAGSystem()
+    # rag_system.create_collection("tech_docs")
+    # rag_system.add_documents("tech_docs", SAMPLE_DOCUMENTS["tech_docs"])
+    # filtered_results = rag_system.search_documents(
+    #     "tech_docs", 
+    #     "database information",
+    #     metadata_filter={"category": "Database"}
+    # )
+    #
+    # Example 2: Batch processing multiple queries
+    # queries = ["What is RAG?", "How do embeddings work?", "ChromaDB features"]
+    # for query in queries:
+    #     response = rag_system.generate_rag_response("tech_docs", query)
+    #     rag_system.display_rag_response(response)
+
+
+if __name__ == "__main__":
+    main()
+
 
 """
 EXERCISE COMPLETION CHECKLIST:
@@ -686,8 +698,8 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Implement search_documents() with similarity search and filtering
 ✅ Complete generate_rag_response() with full RAG pipeline
 ✅ Implement display_rag_response() with formatted output
-□ Complete demonstrate_chromadb_rag() with comprehensive testing
-□ Test your implementation with the example usage
+✅ Complete demonstrate_chromadb_rag() with comprehensive testing
+✅ Test your implementation with the example usage
 ✅ Add your own API key and test the complete workflow
 
 BONUS CHALLENGES:
