@@ -398,11 +398,77 @@ class ChromaDBRAGSystem:
             Dict: Search results with documents, distances, and metadata
         """
         # TODO: Validate collection exists
-        # TODO: Generate query embedding
-        # TODO: Perform similarity search
-        # TODO: Format and return results
-        pass
+        if collection_key not in self.collections:
+            raise ValueError(f"Collection {collection_key} not found.")
 
+        collection = self.collections[collection_key]
+        print(f"\n🔍 Searching collection: {collection.name}")
+        print(f"   Query: '{query}'")
+        print(f"   Number of results requested: {n_results}")
+
+        # TODO: Generate query embedding
+        try:
+            query_embedding = self.generate_embeddings([query])
+
+            if not query_embedding:
+                print("   ❌ No embedding generated for query; search aborted.")
+                return {
+                    "query": query,
+                    "results": [],
+                    "n_results": 0
+                }
+
+        except Exception as e:
+            print(f"   ❌ Error generating query embedding: {str(e)}")
+            return {
+                "query": query,
+                "results": [],
+                "n_results": 0
+            }
+        
+        # TODO: Perform similarity search
+        try:
+            results = collection.query(
+                query_embeddings=query_embedding,
+                n_results=n_results,
+                where=metadata_filter if metadata_filter else {},
+                include=["documents", "metadatas", "distances"]
+            )
+
+            print(f"   ✅ Retrieved {len(results['documents'][0])} results")
+        except Exception as e:
+            print(f"   ❌ Error performing similarity search: {str(e)}")
+            return {
+                "query": query,
+                "results": [],
+                "n_results": 0
+            }
+
+        # TODO: Format and return results
+        try:
+            formatted_results = {
+                "query": query,
+                "results": [],
+                "n_results": len(results["documents"][0])
+            }
+
+            for i in range(len(results["documents"][0])):
+                formatted_results["results"].append({
+                    "document": results["documents"][0][i],
+                    "similarity": 1 - results["distances"][0][i],  # Convert distance to similarity
+                    "metadata": results["metadatas"][0][i]
+                })
+
+            return formatted_results
+        except Exception as e:
+            print(f"   ❌ Error formatting search results: {str(e)}")
+            return {
+                "query": query,
+                "results": [],
+                "n_results": 0
+            }
+        
+    
     def generate_rag_response(self, collection_key: str, query: str, n_context: int = 3,
                             model: str = "gpt-4o-mini") -> Dict:
         """
@@ -504,7 +570,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Complete create_collection() with ChromaDB collection creation
 ✅ Implement generate_embeddings() with OpenAI API integration
 ✅ Complete add_documents() with embedding generation and storage
-□ Implement search_documents() with similarity search and filtering
+✅ Implement search_documents() with similarity search and filtering
 □ Complete generate_rag_response() with full RAG pipeline
 □ Implement display_rag_response() with formatted output
 □ Complete demonstrate_chromadb_rag() with comprehensive testing
