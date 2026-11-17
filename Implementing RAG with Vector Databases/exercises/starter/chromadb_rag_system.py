@@ -561,7 +561,30 @@ class ChromaDBRAGSystem:
         """
         # TODO: Format and display RAG response
         # Include: question, answer, context sources, performance metrics
-        pass
+        print("\n" + "=" * 80)
+        print("📖 RAG Response")
+        print("=" * 80)
+        print(f"\n❓ Question:")
+        print(f"    {rag_response.get('query', 'N/A')}")
+        print(f"\n💡 Answer:")
+        print(f"    {rag_response.get('answer', 'N/A')}")
+
+        context_docs = rag_response.get("context", [])
+        if context_docs:
+            print(f"\n📚 Context Sources ({len(context_docs)}) documents:")
+            for i, doc in enumerate(context_docs):
+                source = doc.get("source", "N/A")
+                print(f"   {i + 1}. Source: {source}")
+                print(f"      Preview: {doc['document'][:120]}...") # Show first 120 chars
+        else:
+            print("\n📚 No context sources were used for this answer.")
+
+        metadata = rag_response.get("metadata", {})
+        print(f"\n⚙️  Metadata:")
+        print(f"   Model Used: {metadata.get('model', 'N/A')}")
+        print(f"   Number of Sources: {metadata.get('n_sources', len(context_docs))}")
+        print("=" * 80)
+    
 
 def demonstrate_chromadb_rag():
     """
@@ -618,7 +641,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Complete add_documents() with embedding generation and storage
 ✅ Implement search_documents() with similarity search and filtering
 ✅ Complete generate_rag_response() with full RAG pipeline
-□ Implement display_rag_response() with formatted output
+✅ Implement display_rag_response() with formatted output
 □ Complete demonstrate_chromadb_rag() with comprehensive testing
 □ Test your implementation with the example usage
 ✅ Add your own API key and test the complete workflow
