@@ -350,9 +350,32 @@ class ChromaDBRAGSystem:
         print(f"\n📄 Adding {len(documents)} documents to {collection.name}")
         
         # TODO: Extract texts, IDs, and metadata
+        texts = [doc["content"] for doc in documents]
+        ids = [doc["id"] for doc in documents]
+        metadatas = [doc.get("metadata", {}) for doc in documents]
+
         # TODO: Generate embeddings
+        embeddings = self.generate_embeddings(texts)
+
+        if not embeddings:
+            print("   ❌ No embeddings generated; documents not added.")
+            return
+
         # TODO: Add documents to collection
         # TODO: Print success status
+        try:
+            collection.add(
+                documents=texts,
+                ids=ids,
+                metadatas=metadatas,
+                embeddings=embeddings
+            )
+            print(f"   ✅ Successfully added {len(documents)} documents to {collection.name}")
+            print(f"   Collection now contains {collection.count()} documents")
+        except Exception as e:
+            print(f"   ❌ Error adding documents: {str(e)}")
+            raise
+    
 
     def search_documents(self, collection_key: str, query: str, n_results: int = 3, 
                         metadata_filter: Optional[Dict] = None) -> Dict:
@@ -480,7 +503,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Implement ChromaDBRAGSystem.__init__() with proper initialization
 ✅ Complete create_collection() with ChromaDB collection creation
 ✅ Implement generate_embeddings() with OpenAI API integration
-□ Complete add_documents() with embedding generation and storage
+✅ Complete add_documents() with embedding generation and storage
 □ Implement search_documents() with similarity search and filtering
 □ Complete generate_rag_response() with full RAG pipeline
 □ Implement display_rag_response() with formatted output
