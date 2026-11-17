@@ -308,7 +308,13 @@ class ChromaDBRAGSystem:
             if self.embedding_config["provider"] == "openai":
                 # TODO: Use OpenAI embeddings API
                 # Hint: Use self.openai_client.embeddings.create()
-                pass
+                response = self.openai_client.embeddings.create(
+                    model=self.embedding_config["model"],
+                    input=texts
+                )
+                embeddings = [item.embedding for item in response.data]
+                print(f"   ✅ Generated {len(embeddings)} OpenAI embeddings successfully")
+                return embeddings
                 
             else:
                 # TODO: Handle local embeddings (optional)
@@ -473,7 +479,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Create comprehensive SAMPLE_DOCUMENTS with realistic content
 ✅ Implement ChromaDBRAGSystem.__init__() with proper initialization
 ✅ Complete create_collection() with ChromaDB collection creation
-□ Implement generate_embeddings() with OpenAI API integration
+✅ Implement generate_embeddings() with OpenAI API integration
 □ Complete add_documents() with embedding generation and storage
 □ Implement search_documents() with similarity search and filtering
 □ Complete generate_rag_response() with full RAG pipeline
