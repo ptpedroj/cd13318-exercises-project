@@ -601,11 +601,55 @@ def demonstrate_chromadb_rag():
     print("="*60)
     
     # TODO: Initialize the RAG system
+    rag_system = ChromaDBRAGSystem(embedding_config="openai_embeddings", persist_directory="./demo_chroma_db")
+
     # TODO: Create collections
+    print("\n📁 Creating collections...")
+    rag_system.create_collection("tech_docs")
+    rag_system.create_collection("faq_support")
+
     # TODO: Add sample documents
+    print("\n📄 Adding sample documents to collections...")
+    rag_system.add_documents("tech_docs", SAMPLE_DOCUMENTS["tech_docs"])
+    rag_system.add_documents("faq_support", SAMPLE_DOCUMENTS["faq_support"])
+
     # TODO: Test various queries
+    test_queries = [
+        {
+            "collection": "tech_docs",
+            "query": "What is ChromaDB and how does it work?",
+            "description": "Technical documentation query"
+        },
+        {
+            "collection": "faq_support",
+            "query": "How can I reset my password?",
+            "description": "Customer support query"
+        },
+        {
+           "collection": "faq_support",
+           "query": "What are your business hours?",
+           "description": "General information query"
+        }
+    ]
+
     # TODO: Display results
-    pass
+    print("\n🔍 Testing RAG System with various queries...")
+    for i, test in enumerate(test_queries, 1):
+        print(f"\n{'=' * 20} TEST QUERY {i}: {test['description']} {'=' * 20}")
+        rag_response = rag_system.generate_rag_response(
+            collection_key=test["collection"], 
+            query=test["query"],
+            n_context=2
+        )
+        rag_system.display_rag_response(rag_response)
+
+    # Summary of demonstration
+    total_docs = sum(len(docs) for docs in SAMPLE_DOCUMENTS.values())
+    print(f"\n🎉 ChromaDB RAG demonstration completed successfully!")
+    print(f"   Collections created: {len(rag_system.collections)}")
+    print(f"   Total documents added: {total_docs}")
+    print(f"   Queries tested: {len(test_queries)}")
+
 
 # TODO: Example usage - uncomment and test when ready
 # Run the comprehensive demonstration
