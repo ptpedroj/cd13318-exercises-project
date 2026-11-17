@@ -494,11 +494,57 @@ class ChromaDBRAGSystem:
         print(f"   Query: '{query}'")
         
         # TODO: Retrieve relevant context
+        search_results = self.search_documents(collection_key, query, n_results=n_context)
+        context_docs = search_results.get("results", [])
+
+        if not context_docs:
+            print("   ⚠️  No context documents found; proceeding without context")
+            return {
+                "query": query,
+                "context": [],
+                "answer": "No relevant context found to generate an answer.",
+                "metadata": {"model": model, "sources": []}
+            }
+        
         # TODO: Prepare context for generation
+        context_texts = "\n\n".join(f"[Doc {i + 1}] {doc['document']}" for i, doc in enumerate(context_docs))
+
         # TODO: Create prompt with context
+        system_prompt = ("You are a helpful assistant. Answer the user's question using ONLY the provided context below. If the answer is not contained within the context, respond with 'I don't know.'\n\n")
+        user_prompt = f"Context:\n{context_texts}\n\nQuestion: {query}\n\nAnswer:"
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+
         # TODO: Generate response using OpenAI
+        try:
+            response = self.openai_client.chat.completions.create(
+                model=model,
+                messages=messages,
+            )
+
+            answer = response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"   ❌ Error generating RAG response: {str(e)}")
+            raise
+
         # TODO: Format and return comprehensive response
-        pass
+        formatted_response = {
+            "query": query,
+            "answer": answer,
+            "context": context_docs,
+            "metadata": {
+                "model": model,
+                "sources": [doc["metadata"] for doc in context_docs],
+                "n_sources": len(context_docs)
+            }
+        }
+
+        print(f"   ✅ Response generated using model: {model}")
+        print(f"   Sources used: {len(context_docs)}")
+        return formatted_response
+    
 
     def display_rag_response(self, rag_response: Dict) -> None:
         """
@@ -571,7 +617,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Implement generate_embeddings() with OpenAI API integration
 ✅ Complete add_documents() with embedding generation and storage
 ✅ Implement search_documents() with similarity search and filtering
-□ Complete generate_rag_response() with full RAG pipeline
+✅ Complete generate_rag_response() with full RAG pipeline
 □ Implement display_rag_response() with formatted output
 □ Complete demonstrate_chromadb_rag() with comprehensive testing
 □ Test your implementation with the example usage
