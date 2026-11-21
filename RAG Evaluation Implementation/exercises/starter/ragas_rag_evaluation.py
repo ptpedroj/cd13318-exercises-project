@@ -6,20 +6,34 @@
 import pandas as pd
 import numpy as np
 # TODO: Add remaining imports here
+from typing import List, Dict, Tuple, Optional
+import json
+import time
+from datetime import datetime
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # TODO: Import RAGAS components
 # Hint: You'll need evaluate function and various metrics from ragas
 from ragas import evaluate
+from ragas.llms import llm_factory
+from ragas.embeddings import embedding_factory
 from ragas.metrics import (
-    # TODO: Import RAGAS metrics
-    # faithfulness, answer_relevancy, context_precision, context_recall, 
-    # context_relevancy, answer_correctness, answer_similarity
+    Faithfulness,
+    AnswerRelevancy,
+    ContextPrecision,
+    ContextRecall,
+    ContextRelevance,
+    AnswerCorrectness,
 )
 
 # TODO: Import dataset creation and LLM integration
 # Hint: You'll need Dataset from datasets and OpenAI client
 from datasets import Dataset
 # TODO: Add OpenAI import
+import openai
+from openai import OpenAI
+
 
 # TODO: Define evaluation configurations for different assessment strategies
 # Create configurations focusing on different aspects of RAG performance
@@ -562,7 +576,7 @@ def run_custom_evaluation(dataset_key: str, rag_responses: List[Dict], config_ke
 
 """
 EXERCISE COMPLETION CHECKLIST:
-□ Import all necessary libraries (pandas, numpy, ragas, datasets, openai, etc.)
+✅ Import all necessary libraries (pandas, numpy, ragas, datasets, openai, etc.)
 □ Complete EVALUATION_CONFIGS with appropriate RAGAS metrics for each configuration
 □ Fill in EVALUATION_DATASETS with realistic questions, ground truth, and contexts
 □ Implement RAGSystemEvaluator.__init__() with proper initialization
