@@ -585,8 +585,30 @@ class RAGSystemEvaluator:
         }
         
         # TODO: Evaluate with each configuration
+        for config in configs:
+            # Each call builds its own metry objects from self.metrics and returns a formatted results dict we can store and compare
+            if config in EVALUATION_CONFIGS:
+                print(f"\n--- Evaluating with {config} configuration ---")
+                result = self.evaluate_rag_system(dataset, config)
+                comparison_results["results"][config] = result
+                # TODO: Add delays to avoid rate limiting
+                time.sleep(1)
+
         # TODO: Create summary comparison
-        # TODO: Add delays to avoid rate limiting
+        evaluated = comparison_results["results"]
+        overall_scores = {config: result["overall_score"] for config, result in evaluated.items()}
+        best_config = max(overall_scores.items(), key=lambda x: x[1])
+        comparison_results["summary"] = {
+            "best_overall": best_config,
+            "score_comparison": overall_scores,
+            "evaluation_times": {config: result["evaluation_time"] for config, result in evaluated.items()}
+        }
+
+        print(f"\n📊 CONFIGURATION COMPARISON SUMMARY:")
+        print(f"  Best Overall Performance: {best_config[0]} ({best_config[1]:.4f})")
+        print(f"\n  Score Comparison:")
+        for config, score in sorted(overall_scores.items(), key=lambda x: x[1], reverse=True):
+            print(f"    {config}: {score:.4f}")
         
         return comparison_results
 
@@ -785,7 +807,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Implement evaluate_rag_system() with RAGAS evaluation pipeline
 ✅ Complete display_evaluation_results() with comprehensive result formatting
 ✅ Implement metric interpretation and performance analysis methods
-□ Complete compare_configurations() for systematic comparison
+✅ Complete compare_configurations() for systematic comparison
 □ Implement generate_evaluation_report() for automated documentation
 □ Create MockRAGSystem with realistic response data
 □ Complete demonstrate_ragas_evaluation() with comprehensive testing
