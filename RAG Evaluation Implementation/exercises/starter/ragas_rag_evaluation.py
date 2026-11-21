@@ -35,27 +35,55 @@ import openai
 from openai import OpenAI
 
 
+METRIC_REGISTRY = {
+    "faithfulness": Faithfulness,
+    "answer_relevancy": AnswerRelevancy,
+    "context_precision": ContextPrecision,
+    "context_recall": ContextRecall,
+    "context_relevance": ContextRelevance,
+    "answer_correctness": AnswerCorrectness
+}
+
 # TODO: Define evaluation configurations for different assessment strategies
 # Create configurations focusing on different aspects of RAG performance
 EVALUATION_CONFIGS = {
     "comprehensive": {
         # TODO: Add all RAGAS metrics for complete evaluation
-        "metrics": [],
+        "metrics": [
+            "faithfulness",
+            "answer_relevancy",
+            "context_precision",
+            "context_recall",
+            "context_relevance",
+            "answer_correctness"
+        ],
         "description": "Complete evaluation covering all aspects of RAG performance"
     },
     "retrieval_focused": {
         # TODO: Add context-related metrics only
-        "metrics": [],
+        "metrics": [
+            "context_precision",
+            "context_recall",
+            "context_relevance"
+        ],
         "description": "Evaluation focused on retrieval component quality"
     },
     "generation_focused": {
         # TODO: Add answer-related metrics only
-        "metrics": [],
+        "metrics": [
+            "faithfulness",
+            "answer_relevancy",
+            "answer_correctness"
+        ],
         "description": "Evaluation focused on generation component quality"
     },
     "quick_eval": {
         # TODO: Add essential metrics for fast evaluation
-        "metrics": [],
+        "metrics": [
+            "faithfulness",
+            "answer_relevancy",
+            "context_precision"
+        ],
         "description": "Fast evaluation for iterative development"
     }
 }
@@ -577,7 +605,7 @@ def run_custom_evaluation(dataset_key: str, rag_responses: List[Dict], config_ke
 """
 EXERCISE COMPLETION CHECKLIST:
 ✅ Import all necessary libraries (pandas, numpy, ragas, datasets, openai, etc.)
-□ Complete EVALUATION_CONFIGS with appropriate RAGAS metrics for each configuration
+✅ Complete EVALUATION_CONFIGS with appropriate RAGAS metrics for each configuration
 □ Fill in EVALUATION_DATASETS with realistic questions, ground truth, and contexts
 □ Implement RAGSystemEvaluator.__init__() with proper initialization
 □ Complete create_evaluation_dataset() with RAGAS dataset formatting
