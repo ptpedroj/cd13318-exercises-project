@@ -258,21 +258,30 @@ class RAGSystemEvaluator:
         test_cases = dataset_config["test_cases"]
         
         print(f"\n📊 Creating evaluation dataset: {dataset_config['name']}")
+        print(f"   Description: {dataset_config['description']}")
+        print(f"   Number of test cases: {len(test_cases)}")
         
         # TODO: Prepare data in RAGAS format
+        n = min(len(test_cases), len(rag_system_responses))
+        if n < len(test_cases):
+            print(f"⚠️ Warning: Only {n} RAG system responses provided for {len(test_cases)} test cases. Some cases will be skipped.")
+
         evaluation_data = {
-            "question": [],
-            "contexts": [],
-            "answer": [],
-            "ground_truth": []
+            "question": [case["question"] for case in test_cases[:n]],
+            "contexts": [case["contexts"] for case in test_cases[:n]],
+            "answer": [response["answer"] for response in rag_system_responses[:n]],
+            "ground_truth": [case["ground_truth"] for case in test_cases[:n]]
         }
         
         # TODO: Process each test case and corresponding RAG response
         # Hint: Loop through test_cases and match with rag_system_responses
+        dataset = Dataset.from_dict(evaluation_data)
+        print(f"✅ Evaluation dataset created with {len(dataset)} entries")
         
         # TODO: Create and return RAGAS dataset
         # Hint: Use Dataset.from_dict(evaluation_data)
-        pass
+        return dataset
+    
 
     def evaluate_rag_system(self, dataset: Dataset, config_key: str = "comprehensive") -> Dict:
         """
@@ -679,7 +688,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Complete EVALUATION_CONFIGS with appropriate RAGAS metrics for each configuration
 ✅ Fill in EVALUATION_DATASETS with realistic questions, ground truth, and contexts
 ✅ Implement RAGSystemEvaluator.__init__() with proper initialization
-□ Complete create_evaluation_dataset() with RAGAS dataset formatting
+✅ Complete create_evaluation_dataset() with RAGAS dataset formatting
 □ Implement evaluate_rag_system() with RAGAS evaluation pipeline
 □ Complete display_evaluation_results() with comprehensive result formatting
 □ Implement metric interpretation and performance analysis methods
