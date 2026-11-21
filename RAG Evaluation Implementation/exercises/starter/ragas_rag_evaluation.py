@@ -391,6 +391,11 @@ class RAGSystemEvaluator:
         # TODO: Display evaluation summary
         print(f"\n📋 EVALUATION SUMMARY:")
         # Include: dataset, configuration, size, time, overall score
+        print(f"   Dataset: {dataset_name}")
+        print(f"   Configuration: {results.get('config_used', 'N/A')}")
+        print(f"   Dataset size: {results.get('dataset_size', 0)} examples")
+        print(f"   Evaluation time: {results.get('evaluation_time', 0):.2f} seconds")
+        print(f"   Overall score: {results.get('overall_score', 0):.4f}")
         
         # TODO: Handle evaluation errors
         if "error" in results:
@@ -401,15 +406,20 @@ class RAGSystemEvaluator:
         # TODO: Display metric breakdown with interpretations
         print(f"\n📈 METRIC BREAKDOWN:")
         # For each metric, show score and interpretation
+        for metric_name, score in results.get("metrics", {}).items():
+            interpretation = self._interpret_metric_score(metric_name, score)
+            print(f"   {metric_name}: {score:.4f} -> {interpretation}")
         
         # TODO: Provide performance analysis
         print(f"\n💡 PERFORMANCE ANALYSIS:")
         # Analyze retrieval vs generation performance
         # Identify strengths and weaknesses
+        self._analyze_performance(results)
         
         # TODO: Provide actionable recommendations
         print(f"\n🎯 RECOMMENDATIONS:")
         # Generate specific improvement suggestions
+        self._provide_recommendations(results)
 
 
     def _interpret_metric_score(self, metric_name: str, score: float) -> str:
@@ -722,7 +732,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Implement RAGSystemEvaluator.__init__() with proper initialization
 ✅ Complete create_evaluation_dataset() with RAGAS dataset formatting
 ✅ Implement evaluate_rag_system() with RAGAS evaluation pipeline
-□ Complete display_evaluation_results() with comprehensive result formatting
+✅ Complete display_evaluation_results() with comprehensive result formatting
 □ Implement metric interpretation and performance analysis methods
 □ Complete compare_configurations() for systematic comparison
 □ Implement generate_evaluation_report() for automated documentation
