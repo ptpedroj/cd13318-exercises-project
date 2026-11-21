@@ -442,11 +442,24 @@ class RAGSystemEvaluator:
         if score >= 0.8:
             quality = "Excellent"
         # TODO: Add remaining thresholds
-        
+        elif score >= 0.6:
+            quality = "Good"
+        elif score >= 0.4:
+            quality = "Fair"
+        elif score >= 0.2:
+            quality = "Poor"
+        else:
+            quality = "Very Poor"
+
         # TODO: Create metric-specific interpretations
         interpretations = {
-            "faithfulness": f"{quality} - Generated answers are faithful to retrieved context",
+            "faithfulness": f"{quality} - Generated answers are {'highly' if score >= 0.8 else 'moderately' if score >= 0.6 else 'poorly'} faithful to retrieved context",
             # TODO: Add interpretations for other metrics
+            "answer_relevancy": f"{quality} - Generated answers are {'highly' if score >= 0.8 else 'moderately' if score >= 0.6 else 'poorly'} relevant to questions",
+            "context_precision": f"{quality} - Retrieved context has {'high' if score >= 0.8 else 'moderate' if score >= 0.6 else 'poor'} precision",
+            "context_recall": f"{quality} - Retrieved context has {'high' if score >= 0.8 else 'moderate' if score >= 0.6 else 'poor'} recall",
+            "answer_correctness": f"{quality} - Answers are {'highly' if score >= 0.8 else 'moderately' if score >= 0.6 else 'poorly'} correct",
+            "context_relevance": f"{quality} - Retrieved context is {'highly' if score >= 0.8 else 'moderately' if score >= 0.6 else 'poorly'} relevant"
         }
         
         return interpretations.get(metric_name, f"{quality} performance")
