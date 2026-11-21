@@ -308,22 +308,29 @@ class RAGSystemEvaluator:
         config = EVALUATION_CONFIGS[config_key]
         
         print(f"\n🧪 Evaluating RAG system with {config_key} configuration")
+        print(f"    Description: {config['description']}")
+        print(f"    Metrics: {config['metrics']}")
+
+        metric_objects = [self.metrics[name] for name in config["metrics"]]
         
         # TODO: Record start time for performance tracking
-        start_time = 0
+        start_time = time.time()
         
         try:
             # TODO: Run RAGAS evaluation
             # Hint: Use evaluate() function with dataset, metrics, and LLM
-            results = None
+            results = evaluate(
+                dataset=dataset,
+                metrics=metric_objects
+            )
             
             # TODO: Calculate evaluation time
-            evaluation_time = 0
+            evaluation_time = time.time() - start_time
             
             # TODO: Format results for analysis
             formatted_results = {
                 "config_used": config_key,
-                "evaluation_time": evaluation_time,
+                "evaluation_time": round(evaluation_time, 2),
                 "dataset_size": len(dataset),
                 "metrics": {},
                 "overall_score": 0,
@@ -331,9 +338,24 @@ class RAGSystemEvaluator:
             }
             
             # TODO: Extract and format metric scores
+            for name in config["metrics"]:
+                key = self.metrics[name].name
+                values = []
+                for row in results.scores:
+                    if key in row and row[key] is not None:
+                        values.append(getattr(row[key], "value", row[key]))
+                if values:
+                    formatted_results["metrics"][name] = round(np.mean(values), 4)
+
             # TODO: Calculate overall score
+            scored = list(formatted_results["metrics"].values())
+            if scored:
+                formatted_results["overall_score"] = round(np.mean(scored), 4)
             
             print(f"✅ Evaluation completed successfully")
+            print(f"   Evaluation time: {evaluation_time:.2f} seconds")
+            print(f"   Overall score: {formatted_results['overall_score']:.4f}")
+            
             return formatted_results
             
         except Exception as e:
@@ -346,6 +368,7 @@ class RAGSystemEvaluator:
                 "overall_score": 0,
                 "error": str(e)
             }
+
 
     def display_evaluation_results(self, results: Dict, dataset_name: str = "Unknown") -> None:
         """
@@ -389,6 +412,7 @@ class RAGSystemEvaluator:
         print(f"\n🎯 RECOMMENDATIONS:")
         # Generate specific improvement suggestions
 
+
     def _interpret_metric_score(self, metric_name: str, score: float) -> str:
         """
         Provide interpretation for individual metric scores.
@@ -418,6 +442,7 @@ class RAGSystemEvaluator:
         
         return interpretations.get(metric_name, f"{quality} performance")
 
+
     def _analyze_performance(self, results: Dict) -> None:
         """
         Provide comprehensive performance analysis based on metric scores.
@@ -443,6 +468,7 @@ class RAGSystemEvaluator:
         
         # TODO: Identify strengths and weaknesses
         # Find best and worst performing metrics
+
 
     def _provide_recommendations(self, results: Dict) -> None:
         """
@@ -471,6 +497,7 @@ class RAGSystemEvaluator:
         # TODO: Display recommendations
         for i, rec in enumerate(recommendations, 1):
             print(f"   {i}. {rec}")
+
 
     def compare_configurations(self, dataset: Dataset, configs: List[str]) -> Dict:
         """
@@ -503,6 +530,7 @@ class RAGSystemEvaluator:
         
         return comparison_results
 
+
     def generate_evaluation_report(self, results: Dict, dataset_name: str, output_file: str = None) -> str:
         """
         Generate comprehensive evaluation report in markdown format.
@@ -525,14 +553,14 @@ class RAGSystemEvaluator:
         # TODO: Create comprehensive markdown report
         report = f"""# RAG System Evaluation Report
 
-## Executive Summary
-- **Dataset**: {dataset_name}
-- **Evaluation Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-- **Configuration**: {results['config_used']}
-- **Overall Score**: {results['overall_score']:.4f}
+            ## Executive Summary
+            - **Dataset**: {dataset_name}
+            - **Evaluation Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            - **Configuration**: {results['config_used']}
+            - **Overall Score**: {results['overall_score']:.4f}
 
-## Metric Breakdown
-"""
+            ## Metric Breakdown
+            """
         
         # TODO: Add metric details, analysis, and recommendations
         
@@ -542,6 +570,7 @@ class RAGSystemEvaluator:
             pass
         
         return report
+
 
 # Mock RAG System for demonstration purposes
 class MockRAGSystem:
@@ -567,6 +596,7 @@ class MockRAGSystem:
             ]
         }
     
+
     def get_responses(self, dataset_key: str) -> List[Dict]:
         """
         Get mock RAG responses for a specific dataset.
@@ -584,6 +614,7 @@ class MockRAGSystem:
         """
         # TODO: Return responses for specified dataset
         return self.responses.get(dataset_key, [])
+
 
 def demonstrate_ragas_evaluation():
     """
@@ -614,6 +645,7 @@ def demonstrate_ragas_evaluation():
     # TODO: Display results and analysis
     # TODO: Demonstrate configuration comparison
     # TODO: Generate sample reports
+
 
 def run_custom_evaluation(dataset_key: str, rag_responses: List[Dict], config_key: str = "comprehensive"):
     """
@@ -649,6 +681,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 # TODO: Example usage - uncomment and test when ready
 # Run the comprehensive demonstration
@@ -689,7 +722,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Fill in EVALUATION_DATASETS with realistic questions, ground truth, and contexts
 ✅ Implement RAGSystemEvaluator.__init__() with proper initialization
 ✅ Complete create_evaluation_dataset() with RAGAS dataset formatting
-□ Implement evaluate_rag_system() with RAGAS evaluation pipeline
+✅ Implement evaluate_rag_system() with RAGAS evaluation pipeline
 □ Complete display_evaluation_results() with comprehensive result formatting
 □ Implement metric interpretation and performance analysis methods
 □ Complete compare_configurations() for systematic comparison
