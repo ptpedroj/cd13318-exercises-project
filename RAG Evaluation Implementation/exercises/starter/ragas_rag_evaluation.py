@@ -44,6 +44,7 @@ METRIC_REGISTRY = {
     "answer_correctness": AnswerCorrectness
 }
 
+
 # TODO: Define evaluation configurations for different assessment strategies
 # Create configurations focusing on different aspects of RAG performance
 EVALUATION_CONFIGS = {
@@ -88,6 +89,7 @@ EVALUATION_CONFIGS = {
     }
 }
 
+
 # TODO: Create test datasets for different domains and complexity levels
 # Define realistic evaluation scenarios with questions, ground truth, and contexts
 EVALUATION_DATASETS = {
@@ -96,19 +98,28 @@ EVALUATION_DATASETS = {
         "description": "Questions about technical concepts and implementations",
         "test_cases": [
             {
-                "question": "",  # TODO: Add technical question about ChromaDB
-                "ground_truth": "",  # TODO: Add expected correct answer
-                "contexts": []  # TODO: Add relevant context documents
+                "question": "What is ChromaDB and what are its main features?",  # TODO: Add technical question about ChromaDB
+                "ground_truth": "ChromaDB is an open-source vector database designed for AI applications. Its main features include efficient storage and retrieval of high-dimensional vectors, support for multiple embedding functions, both in-memory and persistent storage options, and optimization for semantic search and RAG implementations.",  # TODO: Add expected correct answer
+                "contexts": [
+                    "ChromaDB is an open-source vector database designed for AI applications. It provides efficient storage and retrieval of high-dimensional vectors, making it ideal for semantic search, recommendation systems, and RAG implementations.",
+                    "ChromaDB supports multiple embedding functions and offers both in-memory and persistent storage options. It's optimized for AI workloads and provides excellent performance for similarity search operations."
+                ]  # TODO: Add relevant context documents
             },
             {
-                "question": "",  # TODO: Add question about RAG systems
-                "ground_truth": "",  # TODO: Add expected answer
-                "contexts": []  # TODO: Add relevant contexts
+                "question": "How does RAG improve upon traditional language model responses?",  # TODO: Add question about RAG systems
+                "ground_truth": "RAG (Retrieval-Augmented Generation) improves upon traditional language model responses by combining external knowledge retrieval with generation. This provides more accurate, up-to-date, and contextually relevant responses which reduce hallucinations and improve factual accuracy.",  # TODO: Add expected answer
+                "contexts": [
+                    "Retrieval-Augmented Generation (RAG) combines the power of large language models with external knowledge retrieval. By retrieving relevant documents before generation, RAG systems can provide more accurate responses.",
+                    "RAG systems reduce hallucinations and improve factual accuracy by grounding generated responses in retrieved context. This makes them more reliable for knowledge-intensive tasks."
+                ]  # TODO: Add relevant contexts
             },
             {
-                "question": "",  # TODO: Add question about vector embeddings
-                "ground_truth": "",  # TODO: Add expected answer
-                "contexts": []  # TODO: Add relevant contexts
+                "question": "What are vector embeddings and how do they enable semantic search?",  # TODO: Add question about vector embeddings
+                "ground_truth": "Vector embeddings are numerical representations of text that capture semantic meaning. They enable semantic search by converting text into high-dimensional vectors where similar concepts are positioned close together in the vector space, allowing for meaning-based rather than keyword-based search.",  # TODO: Add expected answer
+                "contexts": [
+                    "Vector embeddings are numerical representations of text that capture semantic meaning. Modern embedding models can convert text into high-dimensional vectors where similar concepts are positioned close together in the vector space.",
+                    "In vector space, similar concepts are positioned close together, enabling semantic search. This allows for meaning-based retrieval rather than relying solely on keyword matching."
+                ]  # TODO: Add relevant contexts
             }
         ]
     },
@@ -118,22 +129,32 @@ EVALUATION_DATASETS = {
         "test_cases": [
             {
                 "question": "",  # TODO: Add customer support question
-                "ground_truth": "",  # TODO: Add expected answer
-                "contexts": []  # TODO: Add relevant contexts
+                "ground_truth": "To reset your password, click on the 'Forgot Password' link on the login page, enter your email address, and follow the instructions sent to your email. The reset link expires after 24 hours for your security.",  # TODO: Add expected answer
+                "contexts": [
+                    "Password reset process: Click 'Forgot Password' on the login page, enter your email address, and follow the email instructions. Reset links expire after 24 hours.",
+                    "For security, password reset links are only valid for 24 hours. If expired, you'll need to request a new link."
+                ]  # TODO: Add relevant contexts
             },
             {
-                "question": "",  # TODO: Add another support question
-                "ground_truth": "",  # TODO: Add expected answer
-                "contexts": []  # TODO: Add relevant contexts
+                "question": "What are your business hours?",  # TODO: Add another support question
+                "ground_truth": "Our customer support is available Monday through Friday from 9 AM to 6 PM EST. For urgent technical issues, our emergency support line is available 24/7 for premium customers.",  # TODO: Add expected answer
+                "contexts": [
+                    "Customer support hours: Monday to Friday, 9 AM to 6 PM EST. Emergency support is available 24/7 for premium customers.",
+                    "Premium customers have access to 24/7 emergency support for urgent technical issues outside regular business hours."
+                ]  # TODO: Add relevant contexts
             },
             {
-                "question": "",  # TODO: Add third support question
-                "ground_truth": "",  # TODO: Add expected answer
-                "contexts": []  # TODO: Add relevant contexts
+                "question": "How can I upgrade my subscription?",  # TODO: Add third support question
+                "ground_truth": "You can upgrade your subscription by logging into your account, navigating to the 'Billing' section and selecting 'Upgrade Plan'. Changes take effect immediately, and you'll be prorated for the current billing period.",  # TODO: Add expected answer
+                "contexts": [
+                    "Subscription upgrade process: Log into your account, go to the 'Billing' section, and select 'Upgrade Plan'. Changes are immediate with prorated billing.",
+                    "Billing is prorated when upgrading subscriptions, so you only pay for the remaining time in your current billing period."
+                ]  # TODO: Add relevant contexts
             }
         ]
     }
 }
+
 
 class RAGSystemEvaluator:
     """
@@ -606,7 +627,7 @@ def run_custom_evaluation(dataset_key: str, rag_responses: List[Dict], config_ke
 EXERCISE COMPLETION CHECKLIST:
 ✅ Import all necessary libraries (pandas, numpy, ragas, datasets, openai, etc.)
 ✅ Complete EVALUATION_CONFIGS with appropriate RAGAS metrics for each configuration
-□ Fill in EVALUATION_DATASETS with realistic questions, ground truth, and contexts
+✅ Fill in EVALUATION_DATASETS with realistic questions, ground truth, and contexts
 □ Implement RAGSystemEvaluator.__init__() with proper initialization
 □ Complete create_evaluation_dataset() with RAGAS dataset formatting
 □ Implement evaluate_rag_system() with RAGAS evaluation pipeline
