@@ -262,6 +262,8 @@ class RAGSystemEvaluator:
         print(f"   Number of test cases: {len(test_cases)}")
         
         # TODO: Prepare data in RAGAS format
+        # TODO: Process each test case and corresponding RAG response
+        # Hint: Loop through test_cases and match with rag_system_responses
         n = min(len(test_cases), len(rag_system_responses))
         if n < len(test_cases):
             print(f"⚠️ Warning: Only {n} RAG system responses provided for {len(test_cases)} test cases. Some cases will be skipped.")
@@ -272,14 +274,11 @@ class RAGSystemEvaluator:
             "answer": [response["answer"] for response in rag_system_responses[:n]],
             "ground_truth": [case["ground_truth"] for case in test_cases[:n]]
         }
-        
-        # TODO: Process each test case and corresponding RAG response
-        # Hint: Loop through test_cases and match with rag_system_responses
-        dataset = Dataset.from_dict(evaluation_data)
-        print(f"✅ Evaluation dataset created with {len(dataset)} entries")
-        
+            
         # TODO: Create and return RAGAS dataset
         # Hint: Use Dataset.from_dict(evaluation_data)
+        dataset = Dataset.from_dict(evaluation_data)
+        print(f"✅ Evaluation dataset created with {len(dataset)} entries")
         return dataset
     
 
