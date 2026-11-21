@@ -3,6 +3,8 @@
 
 # TODO: Import necessary libraries
 # Hint: You'll need pandas, numpy, typing, json, time, datetime, matplotlib, seaborn
+from webbrowser import get
+
 import pandas as pd
 import numpy as np
 # TODO: Add remaining imports here
@@ -17,14 +19,14 @@ import seaborn as sns
 # Hint: You'll need evaluate function and various metrics from ragas
 from ragas import evaluate
 from ragas.llms import llm_factory
-from ragas.embeddings import embedding_factory
-from ragas.metrics import (
-    Faithfulness,
+from ragas.embeddings import OpenAIEmbeddings
+from ragas.metrics.collections import (
+    AnswerCorrectness,
     AnswerRelevancy,
     ContextPrecision,
     ContextRecall,
     ContextRelevance,
-    AnswerCorrectness,
+    Faithfulness,
 )
 
 # TODO: Import dataset creation and LLM integration
@@ -33,6 +35,34 @@ from datasets import Dataset
 # TODO: Add OpenAI import
 import openai
 from openai import OpenAI
+
+
+import os
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv is optional; we can still read a pre-set env var.
+    load_dotenv = None
+
+# Read the key from the environment at runtime (never commit real keys).
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+
+
+_client: Optional[OpenAI] = None
+
+
+def get_client(api_key=OPENAI_API_KEY) -> OpenAI:
+    """Create the OpenAI client once and reuse it for every call."""
+    global _client
+    if _client is None:
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY is not set")
+        _client = OpenAI(
+            api_key=api_key,
+            base_url="https://openai.vocareum.com/v1" if api_key.startswith("voc") else None
+        )
+    return _client
 
 
 METRIC_REGISTRY = {
@@ -167,7 +197,7 @@ class RAGSystemEvaluator:
     - Configuration comparison and optimization
     """
     
-    def __init__(self, openai_api_key: str):
+    def __init__(self, openai_api_key: str = None):
         """
         Initialize the RAG system evaluator.
         
@@ -180,7 +210,16 @@ class RAGSystemEvaluator:
             openai_api_key (str): OpenAI API key for LLM-based evaluations
         """
         # TODO: Initialize OpenAI client
-        self.openai_client = None
+        self.openai_client = get_client(openai_api_key) if openai_api_key else get_client()
+
+        # Wire OpenAI into RAGAS via the current factory functions. This allows RAGAS to use the OpenAI LLM and embeddings for evaluation.
+        self.llm = llm_factory("gpt-6-luna", client=self.openai_client)
+        self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small", client=self.openai_client)
+
+        # Instantiate every metric at once, bound to the factories. AnswerRelevancy and AnswerCorrectness need embeddings, 
+        # while the others acces it (and maybe ignore it) via **kwargs, so passing it to all is safe.
+        self.metrics = {name: cls(llm=self.llm, embeddings=self.embeddings) for name, cls in METRIC_REGISTRY.items()}
+
         
         # TODO: Initialize storage for evaluation results and datasets
         self.evaluation_results = {}
@@ -188,6 +227,9 @@ class RAGSystemEvaluator:
         
         # TODO: Print initialization status
         print("🔍 RAG System Evaluator initialized")
+        print(f"   Available evaluation configs: {list(EVALUATION_CONFIGS.keys())}")
+        print(f"   Available test datasets: {list(EVALUATION_DATASETS.keys())}")
+
 
     def create_evaluation_dataset(self, dataset_key: str, rag_system_responses: List[Dict]) -> Dataset:
         """
@@ -591,6 +633,14 @@ def run_custom_evaluation(dataset_key: str, rag_responses: List[Dict], config_ke
     # TODO: Display results
     # TODO: Return results
 
+
+def main():
+    ev = RAGSystemEvaluator()
+
+
+if __name__ == "__main__":
+    main()
+
 # TODO: Example usage - uncomment and test when ready
 # Run the comprehensive demonstration
 # demonstrate_ragas_evaluation()
@@ -628,7 +678,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Import all necessary libraries (pandas, numpy, ragas, datasets, openai, etc.)
 ✅ Complete EVALUATION_CONFIGS with appropriate RAGAS metrics for each configuration
 ✅ Fill in EVALUATION_DATASETS with realistic questions, ground truth, and contexts
-□ Implement RAGSystemEvaluator.__init__() with proper initialization
+✅ Implement RAGSystemEvaluator.__init__() with proper initialization
 □ Complete create_evaluation_dataset() with RAGAS dataset formatting
 □ Implement evaluate_rag_system() with RAGAS evaluation pipeline
 □ Complete display_evaluation_results() with comprehensive result formatting
