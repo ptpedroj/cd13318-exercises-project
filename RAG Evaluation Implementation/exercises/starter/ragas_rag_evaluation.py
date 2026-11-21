@@ -524,13 +524,36 @@ class RAGSystemEvaluator:
         recommendations = []
         
         # TODO: Generate context-based recommendations
-        # Check context_precision, context_recall, context_relevancy scores
+        # Check context_precision, context_recall, context_relevance scores
+        if "context_precision" in metrics and metrics["context_precision"] < 0.6:
+            recommendations.append("Improve retrieval precision by refining similarity thresholds or using reranking")
+
+        if "context_recall" in metrics and metrics["context_recall"] < 0.6:
+            recommendations.append("Enhance context recall by increasing retrieved document count or improving embeddings") 
+
+        if "context_relevance" in metrics and metrics["context_relevance"] < 0.6:
+            recommendations.append("Improve context relevance by using domain-specific embeddings or better query formulation")
         
         # TODO: Generate generation-based recommendations
         # Check faithfulness, answer_relevancy, answer_correctness scores
-        
+        if "faithfulness" in metrics and metrics["faithfulness"] < 0.6:
+            recommendations.append("Improve faithfulness by refining prompts to emphasize context adherence and factual accuracy")
+
+        if "answer_relevancy" in metrics and metrics["answer_relevancy"] < 0.6:
+            recommendations.append("Improve answer relevancy through better prompt engineering and context selection")
+
+        if "answer_correctness" in metrics and metrics["answer_correctness"] < 0.6:
+            recommendations.append("Improve answer correctness by higher quality models or better context")
+
         # TODO: Generate general recommendations based on overall score
-        
+        if results.get("overall_score", 0) < 0.5:
+            recommendations.append("Consider comprehensive system redesign focusing on both retrieval and generation components")
+        elif results.get("overall_score", 0) < 0.7:
+            recommendations.append("Focus on incremental improvements in the weakest performing areas identified in the metric breakdown")
+
+        if not recommendations:
+            recommendations.append("Overall performance is strong - consider advanced optimization for specific use cases")
+
         # TODO: Display recommendations
         for i, rec in enumerate(recommendations, 1):
             print(f"   {i}. {rec}")
