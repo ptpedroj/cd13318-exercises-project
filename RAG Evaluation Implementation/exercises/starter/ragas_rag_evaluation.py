@@ -481,15 +481,30 @@ class RAGSystemEvaluator:
         metrics = results["metrics"]
         
         # TODO: Analyze retrieval performance
-        retrieval_metrics = ["context_precision", "context_recall", "context_relevancy"]
+        retrieval_metrics = ["context_precision", "context_recall", "context_relevance"]
         # Calculate average retrieval score and provide analysis
+        retrieval_scores = [metrics.get(m, 0) for m in retrieval_metrics if m in metrics]
+
+        if retrieval_scores:
+            avg_retrieval_score = round(np.mean(retrieval_scores), 4)
+            print(f"   Average Retrieval Score: {avg_retrieval_score:.4f} -> {'Strong' if avg_retrieval_score >= 0.8 else 'Moderate' if avg_retrieval_score >= 0.6 else 'Weak'} retrieval capabilities")
         
         # TODO: Analyze generation performance
         generation_metrics = ["faithfulness", "answer_relevancy", "answer_correctness"]
         # Calculate average generation score and provide analysis
+        generation_scores = [metrics.get(m, 0) for m in generation_metrics if m in metrics]
         
+        if generation_scores:
+            avg_generation_score = round(np.mean(generation_scores), 4)
+            print(f"   Average Generation Score: {avg_generation_score:.4f} -> {'Strong' if avg_generation_score >= 0.8 else 'Moderate' if avg_generation_score >= 0.6 else 'Weak'} generation capabilities")
+
         # TODO: Identify strengths and weaknesses
         # Find best and worst performing metrics
+        if metrics:
+            best_metric = max(metrics.items(), key=lambda x: x[1])
+            worst_metric = min(metrics.items(), key=lambda x: x[1])
+            print(f"   Strongest Metric: {best_metric[0]} ({best_metric[1]:.4f})")
+            print(f"   Weakest Metric: {worst_metric[0]} ({worst_metric[1]:.4f})")
 
 
     def _provide_recommendations(self, results: Dict) -> None:
