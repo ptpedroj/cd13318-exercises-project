@@ -465,6 +465,31 @@ class RAGSystemEvaluator:
         return interpretations.get(metric_name, f"{quality} performance")
 
 
+    def _get_performance_analysis_text(self, results: Dict) -> str:
+        metrics = results["metrics"]
+        analysis = []
+
+        # TODO: Analyze retrieval performance
+        retrieval_metrics = ["context_precision", "context_recall", "context_relevance"]
+        # Calculate average retrieval score and provide analysis
+        retrieval_scores = [metrics.get(m, 0) for m in retrieval_metrics if m in metrics]
+
+        if retrieval_scores:
+            avg_retrieval_score = round(np.mean(retrieval_scores), 4)
+            analysis.append(f"   Average Retrieval Score: {avg_retrieval_score:.4f} -> {'Strong' if avg_retrieval_score >= 0.8 else 'Moderate' if avg_retrieval_score >= 0.6 else 'Weak'} retrieval capabilities")
+        
+        # TODO: Analyze generation performance
+        generation_metrics = ["faithfulness", "answer_relevancy", "answer_correctness"]
+        # Calculate average generation score and provide analysis
+        generation_scores = [metrics.get(m, 0) for m in generation_metrics if m in metrics]
+        
+        if generation_scores:
+            avg_generation_score = round(np.mean(generation_scores), 4)
+            analysis.append(f"   Average Generation Score: {avg_generation_score:.4f} -> {'Strong' if avg_generation_score >= 0.8 else 'Moderate' if avg_generation_score >= 0.6 else 'Weak'} generation capabilities")
+
+        return "\n".join(analysis) if analysis else "Performance analysis not available"
+    
+
     def _analyze_performance(self, results: Dict) -> None:
         """
         Provide comprehensive performance analysis based on metric scores.
@@ -478,28 +503,11 @@ class RAGSystemEvaluator:
         Args:
             results (Dict): Evaluation results with metric scores
         """
-        metrics = results["metrics"]
-        
-        # TODO: Analyze retrieval performance
-        retrieval_metrics = ["context_precision", "context_recall", "context_relevance"]
-        # Calculate average retrieval score and provide analysis
-        retrieval_scores = [metrics.get(m, 0) for m in retrieval_metrics if m in metrics]
-
-        if retrieval_scores:
-            avg_retrieval_score = round(np.mean(retrieval_scores), 4)
-            print(f"   Average Retrieval Score: {avg_retrieval_score:.4f} -> {'Strong' if avg_retrieval_score >= 0.8 else 'Moderate' if avg_retrieval_score >= 0.6 else 'Weak'} retrieval capabilities")
-        
-        # TODO: Analyze generation performance
-        generation_metrics = ["faithfulness", "answer_relevancy", "answer_correctness"]
-        # Calculate average generation score and provide analysis
-        generation_scores = [metrics.get(m, 0) for m in generation_metrics if m in metrics]
-        
-        if generation_scores:
-            avg_generation_score = round(np.mean(generation_scores), 4)
-            print(f"   Average Generation Score: {avg_generation_score:.4f} -> {'Strong' if avg_generation_score >= 0.8 else 'Moderate' if avg_generation_score >= 0.6 else 'Weak'} generation capabilities")
+        print(self._get_performance_analysis_text(results))
 
         # TODO: Identify strengths and weaknesses
         # Find best and worst performing metrics
+        metrics = results["metrics"]
         if metrics:
             best_metric = max(metrics.items(), key=lambda x: x[1])
             worst_metric = min(metrics.items(), key=lambda x: x[1])
@@ -507,19 +515,7 @@ class RAGSystemEvaluator:
             print(f"   Weakest Metric: {worst_metric[0]} ({worst_metric[1]:.4f})")
 
 
-    def _provide_recommendations(self, results: Dict) -> None:
-        """
-        Provide actionable recommendations based on evaluation results.
-        
-        TODO: Complete this method to:
-        1. Generate context-based recommendations for low scores
-        2. Provide generation-based recommendations for answer quality
-        3. Suggest general improvements based on overall performance
-        4. Format recommendations for actionability
-        
-        Args:
-            results (Dict): Evaluation results with metric scores
-        """
+    def _get_recommendations(self, results: Dict) -> List[str]:
         metrics = results["metrics"]
         recommendations = []
         
@@ -554,8 +550,24 @@ class RAGSystemEvaluator:
         if not recommendations:
             recommendations.append("Overall performance is strong - consider advanced optimization for specific use cases")
 
+        return recommendations
+
+
+    def _provide_recommendations(self, results: Dict) -> None:
+        """
+        Provide actionable recommendations based on evaluation results.
+        
+        TODO: Complete this method to:
+        1. Generate context-based recommendations for low scores
+        2. Provide generation-based recommendations for answer quality
+        3. Suggest general improvements based on overall performance
+        4. Format recommendations for actionability
+        
+        Args:
+            results (Dict): Evaluation results with metric scores
+        """
         # TODO: Display recommendations
-        for i, rec in enumerate(recommendations, 1):
+        for i, rec in enumerate(self._get_recommendations(results), 1):
             print(f"   {i}. {rec}")
 
 
@@ -640,16 +652,36 @@ class RAGSystemEvaluator:
             - **Evaluation Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             - **Configuration**: {results['config_used']}
             - **Overall Score**: {results['overall_score']:.4f}
+            - **Dataset Size**: {results['dataset_size']} examples
+            - **Evaluation Time: {results['evaluation_time']} seconds
 
             ## Metric Breakdown
             """
         
         # TODO: Add metric details, analysis, and recommendations
+        for metric_name, score in results["metrics"].items():
+            interpretation = self._interpret_metric_score(metric_name, score)
+            report += f"- **{metric_name}**: {score:.4f} -> {interpretation}\n"
+
+        report += f"""
+            ## Performance Analysis
+            {self._get_performance_analysis_text(results)}
+
+            ## Recommendations
+        """ + "\n".join(f"- {rec}" for rec in self._get_recommendations(results)) + """
+        
+            ## Technical Details
+            - **Evaluation Framework**: RAGAS
+            - **LLM Provider**: OpenAI
+            - **Evaluation Configuration**: {results['config_used']}
+            - **Timestamp**: {datetime.now().isoformat()}
+        """
         
         # TODO: Save to file if specified
         if output_file:
-            # TODO: Write report to file
-            pass
+            with open(output_file, 'w') as f:
+                f.write(report)
+            print(f"📑 Report saved to: {output_file}")
         
         return report
 
@@ -808,7 +840,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Complete display_evaluation_results() with comprehensive result formatting
 ✅ Implement metric interpretation and performance analysis methods
 ✅ Complete compare_configurations() for systematic comparison
-□ Implement generate_evaluation_report() for automated documentation
+✅ Implement generate_evaluation_report() for automated documentation
 □ Create MockRAGSystem with realistic response data
 □ Complete demonstrate_ragas_evaluation() with comprehensive testing
 □ Test your implementation with the example usage
