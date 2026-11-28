@@ -598,7 +598,7 @@ class RAGSystemEvaluator:
         
         # TODO: Evaluate with each configuration
         for config in configs:
-            # Each call builds its own metry objects from self.metrics and returns a formatted results dict we can store and compare
+            # Each call builds its own metric objects from self.metrics and returns a formatted results dict we can store and compare
             if config in EVALUATION_CONFIGS:
                 print(f"\n--- Evaluating with {config} configuration ---")
                 result = self.evaluate_rag_system(dataset, config)
@@ -787,21 +787,84 @@ def demonstrate_ragas_evaluation():
     print("="*60)
     
     # TODO: Initialize evaluator (replace with your OpenAI API key)
-    evaluator = None
+    evaluator = RAGSystemEvaluator()
     
     # TODO: Initialize mock RAG system
-    mock_rag = None
+    mock_rag = MockRAGSystem()
     
     # TODO: Define test scenarios
     test_scenarios = [
         # TODO: Add test scenarios for different datasets and configurations
+        {
+            "dataset": "technical_qa",
+            "config": "comprehensive",
+            "description": "Technical Q&A with comprehensive evaluation"
+        },
+        {
+            "dataset": "customer_support",
+            "config": "quick_eval",
+            "description": "Customer support with quick evaluation"
+        }
     ]
     
     # TODO: Run evaluations for each scenario
-    # TODO: Display results and analysis
-    # TODO: Demonstrate configuration comparison
-    # TODO: Generate sample reports
+    all_results = {}
 
+    for scenario in test_scenarios:
+        dataset_key = scenario["dataset"]
+        config_key = scenario["config"]
+
+        print(f"\n{'=' * 20} {scenario['description']} {'=' * 20}")
+
+        rag_responses = mock_rag.get_responses(dataset_key)
+
+        if not rag_responses:
+            print(f"⚠️ No responses available for dataset: {dataset_key}")
+            continue
+
+        eval_dataset = evaluator.create_evaluation_dataset(dataset_key, rag_responses)
+        results = evaluator.evaluate_rag_system(eval_dataset, config_key)
+
+        # TODO: Display results and analysis
+        dataset_name = EVALUATION_DATASETS[dataset_key]["name"]
+        evaluator.display_evaluation_results(results, dataset_name)
+
+        all_results[f"{dataset_key}_{config_key}"] = results
+        time.sleep(2)
+
+    # TODO: Demonstrate configuration comparison
+    if (len(all_results)) > 1:
+        print(f"\n{'=' * 20} Configuration Comparison {'=' * 20}")
+        tech_responses = mock_rag.get_responses("technical_qa")
+        tech_dataset = evaluator.create_evaluation_dataset("technical_qa", tech_responses)
+
+        comparison_configs = ["comprehensive", "retrieval_focused", "generation_focused"]
+        comparison_results = evaluator.compare_configurations(tech_dataset, comparison_configs)
+
+        print(f"\n📊 COMPARISON SUMMARY:")
+        summary = comparison_results["summary"]
+        print(f"   Best Configuration: {summary['best_overall'][0]} ({summary['best_overall'][1]:.4f})")
+
+        for config, score in summary["score_comparison"].items():
+            print(f"   {config}: {score:.4f}")
+
+    # TODO: Generate sample reports
+    if all_results:
+        sample_result = list(all_results.values())[0]
+        sample_dataset = list(EVALUATION_DATASETS.keys())[0]
+
+        print(f"\n📄 Generating evaluation report...")
+        report = evaluator.generate_evaluation_report(
+            sample_result,
+            EVALUATION_DATASETS[sample_dataset]["name"],
+            "rag_evaluation_report.md"
+        )
+
+    print(f"\n🎉 RAGAS evaluation demonstration completed!")
+    print(f"   Scenarios tested: {len(test_scenarios)}")
+    print(f"   Configurations compared: {len(comparison_configs) if 'comparison_configs' in locals() else 0}")
+    print(f"   Total evaluations: {len(all_results)}")
+        
 
 def run_custom_evaluation(dataset_key: str, rag_responses: List[Dict], config_key: str = "comprehensive"):
     """
@@ -884,7 +947,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Complete compare_configurations() for systematic comparison
 ✅ Implement generate_evaluation_report() for automated documentation
 ✅ Create MockRAGSystem with realistic response data
-□ Complete demonstrate_ragas_evaluation() with comprehensive testing
+✅ Complete demonstrate_ragas_evaluation() with comprehensive testing
 □ Test your implementation with the example usage
 □ Add your own OpenAI API key and test the complete workflow
 
