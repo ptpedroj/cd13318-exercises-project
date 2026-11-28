@@ -186,6 +186,17 @@ EVALUATION_DATASETS = {
 }
 
 
+DATASET_TECHNICAL_QA = "technical_qa"
+DATASET_CUSTOMER_SUPPORT = "customer_support"
+
+CONFIG_COMPREHENSIVE = "comprehensive"
+CONFIG_RETRIEVAL_FOCUSED = "retrieval_focused"
+CONFIG_GENERATION_FOCUSED = "generation_focused"
+CONFIG_QUICK_EVAL = "quick_eval"
+
+FILE_REPORT_OUTPUT = "rag_evaluation_report.md"
+
+
 class RAGSystemEvaluator:
     """
     Comprehensive RAG system evaluation using RAGAS framework.
@@ -702,7 +713,7 @@ class MockRAGSystem:
         """Initialize mock RAG system with predefined responses."""
         # TODO: Create realistic response data for different datasets
         self.responses = {
-            "technical_qa": [
+            DATASET_TECHNICAL_QA: [
                 # TODO: Add mock responses for technical questions
                 {
                     "question": "What is ChromaDB and what are its main features?",
@@ -726,7 +737,7 @@ class MockRAGSystem:
                     "generation_time": 1.1
                 }
             ],
-            "customer_support": [
+            DATASET_CUSTOMER_SUPPORT: [
                 # TODO: Add mock responses for customer support questions
                 {
                     "question": "How do I reset my password?",
@@ -796,13 +807,13 @@ def demonstrate_ragas_evaluation():
     test_scenarios = [
         # TODO: Add test scenarios for different datasets and configurations
         {
-            "dataset": "technical_qa",
-            "config": "comprehensive",
+            "dataset": DATASET_TECHNICAL_QA,
+            "config": CONFIG_COMPREHENSIVE,
             "description": "Technical Q&A with comprehensive evaluation"
         },
         {
-            "dataset": "customer_support",
-            "config": "quick_eval",
+            "dataset": DATASET_CUSTOMER_SUPPORT,
+            "config": CONFIG_QUICK_EVAL,
             "description": "Customer support with quick evaluation"
         }
     ]
@@ -835,10 +846,10 @@ def demonstrate_ragas_evaluation():
     # TODO: Demonstrate configuration comparison
     if (len(all_results)) > 1:
         print(f"\n{'=' * 20} Configuration Comparison {'=' * 20}")
-        tech_responses = mock_rag.get_responses("technical_qa")
-        tech_dataset = evaluator.create_evaluation_dataset("technical_qa", tech_responses)
+        tech_responses = mock_rag.get_responses(DATASET_TECHNICAL_QA)
+        tech_dataset = evaluator.create_evaluation_dataset(DATASET_TECHNICAL_QA, tech_responses)
 
-        comparison_configs = ["comprehensive", "retrieval_focused", "generation_focused"]
+        comparison_configs = [CONFIG_COMPREHENSIVE, CONFIG_RETRIEVAL_FOCUSED, CONFIG_GENERATION_FOCUSED]
         comparison_results = evaluator.compare_configurations(tech_dataset, comparison_configs)
 
         print(f"\n📊 COMPARISON SUMMARY:")
@@ -857,7 +868,7 @@ def demonstrate_ragas_evaluation():
         report = evaluator.generate_evaluation_report(
             sample_result,
             EVALUATION_DATASETS[sample_dataset]["name"],
-            "rag_evaluation_report.md"
+            FILE_REPORT_OUTPUT
         )
 
     print(f"\n🎉 RAGAS evaluation demonstration completed!")
