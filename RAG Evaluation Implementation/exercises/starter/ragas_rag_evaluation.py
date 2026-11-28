@@ -704,9 +704,51 @@ class MockRAGSystem:
         self.responses = {
             "technical_qa": [
                 # TODO: Add mock responses for technical questions
+                {
+                    "question": "What is ChromaDB and what are its main features?",
+                    "answer": "ChromaDB is an open-source vector database specifically designed for AI applications. Its main features include efficient storage and retrieval of high-dimensional vectors, support for multiple embedding functions, persistent and in-memory storage options, and optimization for semantic search and RAG implementations. It provides excellent performance for similarity search operations.",
+                    "contexts": ["ChromaDB documentation", "Vector database guide"],
+                    "retrieval_time": 0.15,
+                    "generation_time": 1.2
+                },
+                {
+                    "question": "How does RAG improve upon traditional language model responses?",
+                    "answer": "RAG significantly improves traditional language models by incorporating external knowledge retrieval before generation. This approach provides more accurate, up-to-date, and contextually relevant responses. RAG reduces hallucinations by grounding responses in retrieved context and improves factual accuracy for knowledge-intensive tasks.",
+                    "contexts": ["RAG research papers", "AI system architecture"],
+                    "retrieval_time": 0.18,
+                    "generation_time": 1.4
+                },
+                {
+                    "question": "What are vector embeddings and how do they enable semantic search?",
+                    "answer": "Vector embeddings are numerical representations that capture the semantic meaning of text. They convert text into high-dimensional vectors where semantically similar concepts are positioned closer together in the vector space. This enables semantic search by allowing similarity comparisons based on meaning rather than just keyword matching.",
+                    "contexts": ["Embedding models guide", "Semantic search principles"],
+                    "retrieval_time": 0.12,
+                    "generation_time": 1.1
+                }
             ],
             "customer_support": [
                 # TODO: Add mock responses for customer support questions
+                {
+                    "question": "How do I reset my password?",
+                    "answer": "To reset your password, click the 'Forgot Password' link on the login page, enter your email address, and follow the instructions sent to your email. The reset link expires after 24 hours for security. If you don't receive the email, check your spam folder or contact support.",
+                    "contexts": ["Password reset procedure", "Security policies"],
+                    "retrieval_time": 0.08,
+                    "generation_time": 0.9
+                },
+                {
+                    "question": "What are your business hours?",
+                    "answer": "Our customer support is available Monday through Friday from 9 AM to 6 PM EST. For urgent technical issues, premium customers have access to our 24/7 emergency support line. Standard customers can submit tickets anytime through our support portal.",
+                    "contexts": ["Support hours policy", "Premium customer benefits"],
+                    "retrieval_time": 0.06,
+                    "generation_time": 0.8
+                },
+                {
+                    "question": "How can I upgrade my subscription?",
+                    "answer": "You can upgrade your subscription by logging into your account and navigating to the 'Billing' section, then selecting 'Upgrade Plan'. Changes take effect immediately, and billing is prorated for the current period. You can also contact our sales team for assistance with enterprise upgrades.",
+                    "contexts": ["Billing procedures", "Subscription management"],
+                    "retrieval_time": 0.10,
+                    "generation_time": 1.0
+                }
             ]
         }
     
@@ -841,7 +883,7 @@ EXERCISE COMPLETION CHECKLIST:
 ✅ Implement metric interpretation and performance analysis methods
 ✅ Complete compare_configurations() for systematic comparison
 ✅ Implement generate_evaluation_report() for automated documentation
-□ Create MockRAGSystem with realistic response data
+✅ Create MockRAGSystem with realistic response data
 □ Complete demonstrate_ragas_evaluation() with comprehensive testing
 □ Test your implementation with the example usage
 □ Add your own OpenAI API key and test the complete workflow
